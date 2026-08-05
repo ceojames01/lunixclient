@@ -1,0 +1,41 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@font-face {
+  font-family: "Formula1";
+  src: url("https://db.onlinewebfonts.com/t/06d0fb8eb5251a7dba7660fab5d2f0f9.woff2") format("woff2"),
+       url("https://db.onlinewebfonts.com/t/06d0fb8eb5251a7dba7660fab5d2f0f9.woff") format("woff");
+  font-weight: 100 900;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+.font-manrope,
+.font-manrope * {
+  font-family: 'Manrope', system-ui, sans-serif !important;
+}
+
+.font-inter,
+.font-inter * {
+  font-family: 'Inter', system-ui, sans-serif !important;
+}
+
+body {
+  margin: 0;
+  background-color: #15151e;
+  color: #ffffff;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
