@@ -7,7 +7,7 @@ import api from '../services/api';
 
 
 const SectionHeading = ({ children }) => (
-  <h2 className="font-['Formula1'] font-bold text-[32px] text-white uppercase tracking-wider">
+  <h2 className="font-['Formula1'] font-bold text-2xl md:text-[32px] text-white uppercase tracking-wider">
     {children}
   </h2>
 );
@@ -226,7 +226,7 @@ const Dashboard = () => {
         {/* Section C: Editors Picks */}
         <section>
           <div className="flex justify-between items-end w-full">
-            <h2 className="font-['Formula1'] font-bold text-[32px] text-white uppercase tracking-wider italic">
+            <h2 className="font-['Formula1'] font-bold text-2xl md:text-[32px] text-white uppercase tracking-wider italic">
               EDITOR'S PICKS
             </h2>
             <a
@@ -364,7 +364,7 @@ const Dashboard = () => {
         {/* Section E: Leadership */}
         {showExecutiveBoard && (
           <section id="leadership">
-          <h2 className="font-['Formula1'] font-bold text-[32px] text-white uppercase tracking-widest mb-8">
+          <h2 className="font-['Formula1'] font-bold text-2xl md:text-[32px] text-white uppercase tracking-widest mb-8">
             EXECUTIVE BOARD
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6">
