@@ -76,7 +76,7 @@ const Footer = () => {
       {/* Block Tier 2: Partners */}
       <div className="bg-[#111115] py-12 px-4 md:px-8 border-b border-f1-border-grey">
         <div className="max-w-7xl mx-auto flex flex-col">
-          <h2 className="font-['Formula1'] font-bold text-[32px] text-white uppercase tracking-wider">OUR PARTNERS</h2>
+          <h2 className="font-['Formula1'] font-bold text-2xl md:text-[32px] text-white uppercase tracking-wider">OUR PARTNERS</h2>
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-6 mt-8">
             {partners.map((partner) => {
