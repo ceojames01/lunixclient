@@ -59,11 +59,11 @@ const Login = () => {
   return (
     <div className="min-h-screen bg-[#f3f3f3] flex flex-col">
       <Navbar />
-      <div className="flex-1 flex justify-center pt-10 pb-10">
-        <div className="w-full max-w-2xl bg-[#f4f4f4] shadow-md rounded-md overflow-hidden self-start mt-10">
+      <div className="flex-1 flex justify-center md:pt-10 md:pb-10 bg-[#f9f9f9] md:bg-transparent">
+        <div className="w-full max-w-2xl bg-[#f9f9f9] md:bg-[#f4f4f4] md:shadow-md md:rounded-md overflow-hidden self-start md:mt-10">
         
         {/* Top Tabs */}
-        <div className="bg-[#1e1e24] text-white flex">
+        <div className="bg-[#1e1e24] text-white hidden md:flex">
           <button 
             className={`flex-1 py-4 text-center font-bold text-sm tracking-wide border-b-4 ${activeTab === 'signin' ? 'border-f1-red' : 'border-transparent text-zinc-300 hover:text-white hover:bg-zinc-800'}`}
             onClick={() => setActiveTab('signin')}
@@ -79,12 +79,12 @@ const Login = () => {
         </div>
 
         {/* Form Container */}
-        <div className="p-10 md:p-14 bg-[#f9f9f9]">
-          <h1 className="font-['Formula1'] text-[28px] font-light uppercase text-zinc-800/90 mb-6 tracking-wide">
+        <div className="p-6 md:p-14 bg-[#f9f9f9]">
+          <h1 className="font-['Formula1'] text-[26px] md:text-[28px] font-bold uppercase text-[#333] mb-6 tracking-wide">
             {activeTab === 'signin' ? 'SIGN IN' : 'REGISTER'}
           </h1>
           
-          <div className="border-t border-zinc-200 mb-8"></div>
+          <div className="hidden md:block border-t border-zinc-200 mb-8"></div>
 
           {activeTab === 'signin' ? (
             <form className="space-y-6" onSubmit={handleLogin}>
