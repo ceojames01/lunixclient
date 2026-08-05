@@ -3,7 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { LogOut, Search, CheckCircle, XCircle, User, Calendar, QrCode, PlusCircle, Ticket as TicketIcon, Home } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
-import { Html5QrcodeScanner } from 'html5-qrcode';
+import { Html5Qrcode } from 'html5-qrcode';
 
 const ScannerDashboard = () => {
   const [activeTab, setActiveTab] = useState('scan'); // 'scan' or 'issue'
@@ -79,29 +79,44 @@ const ScannerDashboard = () => {
   };
 
   useEffect(() => {
-    if (activeTab === 'scan' && scannerActive) {
-      const scanner = new Html5QrcodeScanner("reader", { 
-        qrbox: { width: 250, height: 250 }, 
-        fps: 5 
-      });
+    let html5QrCode;
 
-      scanner.render(
+    if (activeTab === 'scan' && scannerActive) {
+      html5QrCode = new Html5Qrcode("reader");
+      
+      html5QrCode.start(
+        { facingMode: "environment" },
+        {
+          fps: 10,
+          qrbox: { width: 250, height: 250 }
+        },
         (decodedText) => {
           let code = decodedText;
           if (code.startsWith('LUNIX-TKT-')) {
             code = code.replace('LUNIX-TKT-', '');
           }
           setTicketCode(code);
-          setScannerActive(false); 
-          scanner.clear();
+          setScannerActive(false);
+          
+          if (html5QrCode.isScanning) {
+            html5QrCode.stop().catch(console.error);
+          }
           
           handleVerify(null, code);
         },
-        (error) => {}
-      );
+        (error) => {
+          // ignore routine scan errors
+        }
+      ).catch((err) => {
+        console.error("Camera start failed", err);
+        toast.error("Failed to start camera. Please ensure camera permissions are granted.");
+        setScannerActive(false);
+      });
 
       return () => {
-        scanner.clear().catch(console.error);
+        if (html5QrCode && html5QrCode.isScanning) {
+          html5QrCode.stop().catch(console.error);
+        }
       };
     }
   }, [scannerActive, activeTab]);
