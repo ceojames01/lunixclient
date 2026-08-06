@@ -89,7 +89,7 @@ const Schedule = () => {
       <div className="max-w-6xl mx-auto w-full px-4 py-12 md:py-16">
         
         <div className="flex justify-between items-center mb-6">
-          <h2 className="text-4xl md:text-5xl text-white font-black uppercase tracking-wider font-['Formula1']">
+          <h2 className="text-2xl md:text-5xl text-white font-black uppercase tracking-wider font-['Formula1']">
             Schedule
           </h2>
         </div>
@@ -149,7 +149,7 @@ const Schedule = () => {
 
         {/* Results Section */}
         <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl text-white font-black uppercase tracking-wider mb-8 font-['Formula1']">
+          <h2 className="text-2xl md:text-5xl text-white font-black uppercase tracking-wider mb-8 font-['Formula1']">
             Results
           </h2>
           {schedule.results && schedule.results.length > 0 ? (
@@ -187,7 +187,7 @@ const Schedule = () => {
 
         {/* Location Section */}
         <div className="mb-12">
-          <h2 className="text-4xl md:text-5xl text-white font-black uppercase tracking-wider mb-8 font-['Formula1']">
+          <h2 className="text-2xl md:text-5xl text-white font-black uppercase tracking-wider mb-8 font-['Formula1']">
             Location
           </h2>
           {schedule.locationLink || schedule.locationName ? (
