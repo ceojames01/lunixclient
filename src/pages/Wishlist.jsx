@@ -71,7 +71,7 @@ const Wishlist = () => {
           <ArrowLeft size={20} strokeWidth={1.5} />
           <span className="text-lg font-normal tracking-normal capitalize">Back</span>
         </button>
-        <h1 className="text-4xl font-['Formula1'] font-bold mb-12">My Wishlist</h1>
+        <h1 className="text-2xl md:text-4xl font-['Formula1'] font-bold mb-12">My Wishlist</h1>
         {loading ? (
           <GlobalLoader />
         ) : (
