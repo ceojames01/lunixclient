@@ -208,8 +208,8 @@ const Navbar = () => {
 
         {/* Mobile Menu Dropdown */}
         {isMobileMenuOpen && (
-          <div className="md:hidden bg-[#111115] border-t border-zinc-800 absolute w-full z-50 shadow-2xl">
-            <nav className="flex flex-col font-['Formula1'] text-sm font-light uppercase tracking-wide text-white/90">
+          <div className="md:hidden bg-[#111115] border-t border-zinc-800 absolute w-full h-[calc(100vh-5rem)] overflow-y-auto z-50 shadow-2xl">
+            <nav className="flex flex-col min-h-full font-['Formula1'] text-sm font-light uppercase tracking-wide text-white/90">
               <div 
                 className="bg-[#15151e] px-4 py-4 flex flex-col gap-4"
                 style={{
