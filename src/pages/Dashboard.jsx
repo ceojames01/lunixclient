@@ -253,7 +253,7 @@ const Dashboard = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-4 w-full">
-                      <h3 className="text-white text-base md:text-2xl font-bold leading-tight drop-shadow-md">
+                      <h3 className="font-inter text-white text-base md:text-2xl font-bold leading-tight drop-shadow-md uppercase tracking-wide">
                         {pick.title}
                       </h3>
                     </div>
@@ -271,7 +271,7 @@ const Dashboard = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-4 w-full">
-                      <h3 className="text-white text-xs md:text-[15px] font-semibold leading-snug drop-shadow-md group-hover:text-f1-red transition-colors">
+                      <h3 className="font-inter text-white text-xs md:text-[15px] font-semibold leading-snug drop-shadow-md group-hover:text-f1-red transition-colors uppercase tracking-wide">
                         {pick.title}
                       </h3>
                     </div>
