@@ -30,7 +30,7 @@ const TicketDetails = () => {
     };
     
     const fetchUser = async () => {
-      const token = localStorage.getItem('userToken');
+      const token = localStorage.getItem('userToken') || localStorage.getItem('adminToken');
       if (token) {
         try {
           const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
@@ -52,7 +52,7 @@ const TicketDetails = () => {
   }, [id]);
 
   const handleWishlistToggle = async () => {
-    const token = localStorage.getItem('userToken');
+    const token = localStorage.getItem('userToken') || localStorage.getItem('adminToken');
     if (!token) {
       toast.error('Please login to save to your wishlist');
       navigate('/login');
