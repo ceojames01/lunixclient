@@ -7,12 +7,12 @@ import GlobalLoader from '../components/common/GlobalLoader';
 import { CalendarPlus, ExternalLink, X, MapPin } from 'lucide-react';
 
 const calendarOptions = [
-  { name: 'Google', icon: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg' },
-  { name: 'Outlook.com (Web)', icon: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg' },
-  { name: 'Classic Outlook (Desktop)', icon: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg' },
-  { name: 'New Outlook (Desktop)', icon: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018%E2%80%93present%29.svg' },
-  { name: 'Microsoft 365', icon: 'https://upload.wikimedia.org/wikipedia/commons/c/cc/Microsoft_Office_logo_%282019%E2%80%93present%29.svg' },
-  { name: 'Other', icon: 'https://upload.wikimedia.org/wikipedia/commons/8/87/Calendar_Icon.svg' }
+  { name: 'Google', icon: 'https://api.iconify.design/logos/google-calendar.svg' },
+  { name: 'Outlook.com (Web)', icon: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+  { name: 'Classic Outlook (Desktop)', icon: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+  { name: 'New Outlook (Desktop)', icon: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+  { name: 'Microsoft 365', icon: 'https://api.iconify.design/logos/microsoft-teams.svg' },
+  { name: 'Other', icon: 'https://api.iconify.design/flat-color-icons/calendar.svg' }
 ];
 
 const Schedule = () => {
