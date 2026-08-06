@@ -5,12 +5,12 @@ const CalendarModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const options = [
-    { name: 'Google', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/a/a5/Google_Calendar_icon_%282020%29.svg' },
-    { name: 'Outlook.com (Web)', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018–present%29.svg' },
-    { name: 'Classic Outlook (Desktop)', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018–present%29.svg' },
-    { name: 'New Outlook (Desktop)', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/d/df/Microsoft_Office_Outlook_%282018–present%29.svg' },
-    { name: 'Microsoft 365', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/5/5f/Microsoft_Office_logo_%282019–present%29.svg' },
-    { name: 'Other', iconSrc: 'https://upload.wikimedia.org/wikipedia/commons/c/c2/Calendar_icon_2.svg' }
+    { name: 'Google', iconSrc: 'https://cdn.simpleicons.org/googlecalendar' },
+    { name: 'Outlook.com (Web)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
+    { name: 'Classic Outlook (Desktop)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
+    { name: 'New Outlook (Desktop)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
+    { name: 'Microsoft 365', iconSrc: 'https://cdn.simpleicons.org/microsoft365' },
+    { name: 'Other', iconSrc: 'https://cdn.simpleicons.org/apple' }
   ];
 
   return (
