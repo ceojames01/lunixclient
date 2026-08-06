@@ -171,9 +171,9 @@ const Navbar = () => {
           backgroundImage: 'repeating-linear-gradient(-45deg, transparent, transparent 25px, rgba(255,255,255,0.03) 25px, rgba(255,255,255,0.03) 50px)'
         }}
       >
-        <div className="max-w-7xl mx-auto px-6 h-24 flex items-center justify-between gap-4">
+        <div className="max-w-7xl mx-auto px-6 h-20 md:h-24 flex items-center justify-between gap-4">
           <Link to="/" className="flex items-center">
-            <img src="/logo.png" alt="Lunix Logo" className="h-20 w-auto object-contain" />
+            <img src="/logo.png" alt="Lunix Logo" className="h-16 md:h-20 w-auto object-contain" />
           </Link>
 
           {!isMinimal && (
