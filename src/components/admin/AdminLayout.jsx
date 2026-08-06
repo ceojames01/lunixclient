@@ -6,7 +6,7 @@ const AdminLayout = ({ activeTab, onTabChange, onLogout, adminUser, children }) 
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
   return (
-    <div className="min-h-screen bg-[#0f172a] font-manrope overflow-x-hidden">
+    <div className="min-h-screen bg-[#0f172a] font-inter overflow-x-hidden">
       <Sidebar 
         activeTab={activeTab} 
         onTabChange={(tab) => {
