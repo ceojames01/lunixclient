@@ -24,7 +24,7 @@ const Topbar = ({ onTabChange, onLogout, adminUser, onMenuClick }) => {
         <h2 className="text-lg md:text-xl font-bold text-white tracking-wide uppercase hidden sm:block">Lunix Admin</h2>
       </div>
 
-      <div className="flex items-center gap-4 lg:gap-6 relative z-10">
+      <div className="flex items-center gap-4 lg:gap-6 relative z-50">
         <div className="relative hidden md:block">
           <Search size={18} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-400" />
           <input 
