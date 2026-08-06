@@ -5,12 +5,12 @@ const CalendarModal = ({ isOpen, onClose }) => {
   if (!isOpen) return null;
 
   const options = [
-    { name: 'Google', iconSrc: 'https://cdn.simpleicons.org/googlecalendar' },
-    { name: 'Outlook.com (Web)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
-    { name: 'Classic Outlook (Desktop)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
-    { name: 'New Outlook (Desktop)', iconSrc: 'https://cdn.simpleicons.org/microsoftoutlook/#0078D4' },
-    { name: 'Microsoft 365', iconSrc: 'https://cdn.simpleicons.org/microsoft365' },
-    { name: 'Other', iconSrc: 'https://cdn.simpleicons.org/apple' }
+    { name: 'Google', iconSrc: 'https://api.iconify.design/logos/google-calendar.svg' },
+    { name: 'Outlook.com (Web)', iconSrc: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+    { name: 'Classic Outlook (Desktop)', iconSrc: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+    { name: 'New Outlook (Desktop)', iconSrc: 'https://api.iconify.design/vscode-icons/file-type-outlook.svg' },
+    { name: 'Microsoft 365', iconSrc: 'https://api.iconify.design/logos/microsoft-teams.svg' },
+    { name: 'Other', iconSrc: 'https://api.iconify.design/flat-color-icons/calendar.svg' }
   ];
 
   return (
