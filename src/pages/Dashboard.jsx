@@ -239,13 +239,13 @@ const Dashboard = () => {
             </a>
           </div>
 
-          <div className={`grid grid-cols-1 md:grid-cols-4 gap-4 mt-6 ${picks.length > 0 ? 'md:grid-rows-2 md:h-[720px]' : ''}`}>
+          <div className={`grid grid-cols-2 md:grid-cols-4 gap-3 md:gap-4 mt-6 ${picks.length > 0 ? 'md:grid-rows-2 md:h-[720px]' : ''}`}>
             {picks.length > 0 ? picks.slice(0, 6).map((pick, i) => {
               if (i === 0 || i === 5) {
                 return (
                   <article
                     key={pick._id}
-                    className="md:col-span-2 relative h-64 md:h-full min-h-[250px] overflow-hidden rounded-3xl group cursor-pointer bg-zinc-900"
+                    className="col-span-2 relative h-56 md:h-full min-h-[220px] md:min-h-[250px] overflow-hidden rounded-2xl md:rounded-3xl group cursor-pointer bg-zinc-900"
                   >
                     <MediaBlock
                       item={pick}
@@ -253,7 +253,7 @@ const Dashboard = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-4 w-full">
-                      <h3 className="text-white text-xl md:text-2xl font-bold leading-tight drop-shadow-md">
+                      <h3 className="text-white text-base md:text-2xl font-bold leading-tight drop-shadow-md">
                         {pick.title}
                       </h3>
                     </div>
@@ -263,7 +263,7 @@ const Dashboard = () => {
                 return (
                   <article
                     key={pick._id}
-                    className="md:col-span-1 relative h-64 md:h-full min-h-[250px] overflow-hidden rounded-3xl group cursor-pointer bg-zinc-900"
+                    className="col-span-1 relative h-56 md:h-full min-h-[220px] md:min-h-[250px] overflow-hidden rounded-2xl md:rounded-3xl group cursor-pointer bg-zinc-900"
                   >
                     <MediaBlock
                       item={pick}
@@ -271,7 +271,7 @@ const Dashboard = () => {
                     />
                     <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/20 to-transparent" />
                     <div className="absolute bottom-0 left-0 p-4 w-full">
-                      <h3 className="text-white text-[15px] font-semibold leading-snug drop-shadow-md group-hover:text-f1-red transition-colors">
+                      <h3 className="text-white text-xs md:text-[15px] font-semibold leading-snug drop-shadow-md group-hover:text-f1-red transition-colors">
                         {pick.title}
                       </h3>
                     </div>
