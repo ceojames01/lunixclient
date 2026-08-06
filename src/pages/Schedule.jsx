@@ -100,7 +100,7 @@ const Schedule = () => {
           <div className="p-6 md:p-8 border-b border-zinc-800/50">
             <button 
               onClick={() => setIsCalendarModalOpen(true)}
-              className="bg-[#e10600] text-white px-8 md:px-10 py-2.5 md:py-3 rounded-full font-['Formula1'] font-bold text-sm md:text-[15px] flex items-center gap-3 hover:bg-red-700 transition-colors"
+              className="bg-[#e10600] text-white px-5 md:px-10 py-2 md:py-3 rounded-full font-['Formula1'] font-bold text-[11px] md:text-[15px] flex items-center gap-2 md:gap-3 hover:bg-red-700 transition-colors"
             >
               <CalendarPlus size={20} strokeWidth={2.5} /> Add calendar
             </button>
@@ -114,13 +114,13 @@ const Schedule = () => {
                   index !== schedule.sessions.length - 1 ? 'border-b border-zinc-800/50 pb-6 mb-6' : ''
                 }`}
               >
-                <div className="flex items-center gap-4 md:gap-6 flex-1">
-                  <div className="flex flex-col items-center justify-center min-w-[50px]">
-                    <span className="text-white font-black text-3xl leading-none font-['Formula1']">{session.date}</span>
-                    <span className="text-zinc-400 text-sm uppercase font-bold mt-2">{session.month}</span>
+                <div className="flex items-center gap-3 md:gap-6 flex-1">
+                  <div className="flex flex-col items-center justify-center min-w-[40px] md:min-w-[50px]">
+                    <span className="text-white font-black text-xl md:text-3xl leading-none font-['Formula1']">{session.date}</span>
+                    <span className="text-zinc-400 text-[10px] md:text-sm uppercase font-bold mt-1 md:mt-2">{session.month}</span>
                   </div>
-                  <div className="h-12 w-[2px] bg-zinc-700"></div>
-                  <h3 className="text-white font-bold text-xl md:text-2xl uppercase tracking-wide font-['Formula1']">{session.title}</h3>
+                  <div className="h-8 md:h-12 w-[2px] bg-zinc-700"></div>
+                  <h3 className="text-white font-bold text-[15px] leading-tight md:text-2xl uppercase tracking-wide font-['Formula1']">{session.title}</h3>
                 </div>
                 <Link to="/tickets" className="w-10 h-10 bg-[#B3BFFF] rounded flex items-center justify-center text-black hover:bg-indigo-300 transition-colors">
                   <ExternalLink size={20} strokeWidth={2.5} />
