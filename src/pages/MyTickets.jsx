@@ -77,7 +77,7 @@ const MyTickets = () => {
           <ArrowLeft size={20} strokeWidth={1.5} />
           <span className="text-lg font-normal tracking-normal capitalize">Back</span>
         </button>
-        <h1 className="text-4xl font-['Formula1'] font-bold mb-12">My Tickets</h1>
+        <h1 className="text-2xl md:text-4xl font-['Formula1'] font-bold mb-12">My Tickets</h1>
         
         {loading ? (
           <GlobalLoader />
@@ -101,7 +101,7 @@ const MyTickets = () => {
                           />
                         )}
                         <div>
-                          <h4 className="font-bold text-2xl text-zinc-900 mb-2 leading-tight">{order.event?.title || 'Unknown Event'}</h4>
+                          <h4 className="font-bold text-xl md:text-2xl text-zinc-900 mb-2 leading-tight">{order.event?.title || 'Unknown Event'}</h4>
                           <div className="flex flex-col gap-2 font-sans">
                             <p className="text-xs text-zinc-600 font-semibold flex items-start gap-1.5 uppercase tracking-wide">
                               <span className="mt-0.5 flex-shrink-0"><Calendar size={14} className="text-[#DA1A21]" /></span>

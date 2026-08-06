@@ -35,7 +35,7 @@ const Tickets = () => {
           <ArrowLeft size={20} strokeWidth={1.5} />
           <span className="text-lg font-normal tracking-normal capitalize">Back to home</span>
         </button>
-        <h1 className="text-4xl font-['Formula1'] font-bold mb-12">Upcoming Events & Tickets</h1>
+        <h1 className="text-2xl md:text-4xl font-['Formula1'] font-bold mb-12">Upcoming Events & Tickets</h1>
         {loading ? (
           <GlobalLoader />
         ) : (
