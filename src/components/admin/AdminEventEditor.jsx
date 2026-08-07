@@ -58,16 +58,42 @@ const AdminEventEditor = ({
   const handleDownloadQR = () => {
     const svg = document.getElementById('admin-event-qr-code');
     if (!svg) return;
+    
     const svgData = new XMLSerializer().serializeToString(svg);
     const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
     const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = `${formData.title?.replace(/\s+/g, '-') || 'event'}-qr.svg`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
+    
+    const img = new Image();
+    img.onload = () => {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      
+      // Scale up 4x for high-quality PNG
+      const scale = 4;
+      const width = parseInt(svg.getAttribute('width') || '160');
+      const height = parseInt(svg.getAttribute('height') || '160');
+      const padding = 10 * scale; // Add some white padding
+      
+      canvas.width = (width * scale) + (padding * 2);
+      canvas.height = (height * scale) + (padding * 2);
+      
+      // Fill white background
+      ctx.fillStyle = 'white';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      
+      // Draw scaled image
+      ctx.scale(scale, scale);
+      ctx.drawImage(img, padding / scale, padding / scale);
+      
+      const pngFile = canvas.toDataURL('image/png');
+      const downloadLink = document.createElement('a');
+      downloadLink.download = `${formData.title?.replace(/\s+/g, '-') || 'event'}-qr.png`;
+      downloadLink.href = pngFile;
+      downloadLink.click();
+      
+      URL.revokeObjectURL(url);
+    };
+    img.src = url;
   };
 
   return (
