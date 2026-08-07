@@ -134,8 +134,8 @@ const TicketDetails = () => {
               <h3 className="text-2xl font-bold font-['Manrope'] uppercase">{displayEvent.dateRange}</h3>
             </div>
 
-            <div className="border-l-4 border-f1-red pl-4 mb-6">
-              <h1 className="text-4xl font-['Formula1'] font-bold uppercase tracking-wider">{displayEvent.title || 'Untitled Event'}</h1>
+            <div className="border-l-4 border-f1-red pl-3 md:pl-4 mb-6">
+              <h1 className="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-['Formula1'] font-bold uppercase tracking-wider leading-tight">{displayEvent.title || 'Untitled Event'}</h1>
             </div>
 
             {displayEvent.googleMapsLink ? (
