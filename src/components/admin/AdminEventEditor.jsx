@@ -1,8 +1,9 @@
 import React, { useRef, useState } from 'react';
+import { QRCodeSVG } from 'qrcode.react';
 import { 
   Calendar, MapPin, Ticket, AlignLeft, Info, 
   UploadCloud, Save, X, Image as ImageIcon, Eye, 
-  Plus, Trash2, Clock, Link as LinkIcon 
+  Plus, Trash2, Clock, Link as LinkIcon, QrCode, Download 
 } from 'lucide-react';
 
 const AdminEventEditor = ({ 
@@ -52,6 +53,21 @@ const AdminEventEditor = ({
     const newTiers = [...(formData.ticketTiers || [])];
     newTiers[index][field] = field === 'price' ? Number(value) : value;
     handleChange('ticketTiers', newTiers);
+  };
+
+  const handleDownloadQR = () => {
+    const svg = document.getElementById('admin-event-qr-code');
+    if (!svg) return;
+    const svgData = new XMLSerializer().serializeToString(svg);
+    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const downloadLink = document.createElement('a');
+    downloadLink.href = url;
+    downloadLink.download = `${formData.title?.replace(/\s+/g, '-') || 'event'}-qr.svg`;
+    document.body.appendChild(downloadLink);
+    downloadLink.click();
+    document.body.removeChild(downloadLink);
+    URL.revokeObjectURL(url);
   };
 
   return (
@@ -346,6 +362,35 @@ const AdminEventEditor = ({
               <div className="w-11 h-6 bg-zinc-300 peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-zinc-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-[#00b87c]"></div>
             </label>
           </div>
+
+          {formData._id && (
+            <div className="pt-6 border-t border-zinc-100">
+              <div className="flex items-center gap-2 mb-4">
+                <QrCode className="w-5 h-5 text-zinc-900" />
+                <h3 className="font-bold text-zinc-900">Event QR Code</h3>
+              </div>
+              <div className="flex flex-col items-center">
+                <div className="bg-white p-2 rounded-lg shadow-sm border border-zinc-200 mb-4 inline-block">
+                  <QRCodeSVG 
+                    id="admin-event-qr-code"
+                    value={`${window.location.origin}/tickets/${formData._id}/book`} 
+                    size={160}
+                    bgColor={"#ffffff"}
+                    fgColor={"#000000"}
+                    level={"Q"}
+                    includeMargin={false}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleDownloadQR}
+                  className="flex items-center gap-2 text-sm font-bold text-zinc-600 hover:text-[#00b87c] transition-colors bg-zinc-100 hover:bg-zinc-200 px-4 py-2 rounded-full"
+                >
+                  <Download size={16} /> Download QR
+                </button>
+              </div>
+            </div>
+          )}
 
         </div>
       </div>
