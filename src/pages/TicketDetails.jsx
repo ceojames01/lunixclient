@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { QRCodeSVG } from 'qrcode.react';
-import { Heart, Calendar, Share2, MapPin, ArrowLeft, Download } from 'lucide-react';
+import { Heart, Calendar, Share2, MapPin, ArrowLeft } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import Navbar from '../components/common/Navbar';
@@ -69,22 +69,6 @@ const TicketDetails = () => {
     } catch (error) {
       toast.error('Failed to update wishlist');
     }
-  };
-
-  const handleDownloadQR = () => {
-    const svg = document.getElementById('event-qr-code');
-    if (!svg) return;
-    const svgData = new XMLSerializer().serializeToString(svg);
-    const blob = new Blob([svgData], { type: 'image/svg+xml;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const downloadLink = document.createElement('a');
-    downloadLink.href = url;
-    downloadLink.download = `${displayEvent?.title?.replace(/\s+/g, '-') || 'event'}-qr.svg`;
-    document.body.appendChild(downloadLink);
-    downloadLink.click();
-    document.body.removeChild(downloadLink);
-    URL.revokeObjectURL(url);
-    toast.success('QR Code downloaded!');
   };
 
   const displayEvent = event;
@@ -195,24 +179,15 @@ const TicketDetails = () => {
 
               <div className="text-center">
                 <h3 className="text-xl text-zinc-900 mb-6 font-['Manrope'] font-black uppercase tracking-wide">SCAN QR CODE</h3>
-                <div className="flex flex-col items-center mb-4">
-                  <div className="bg-white p-2 rounded-lg shadow-sm border border-zinc-100 mb-4 inline-block">
-                    <QRCodeSVG 
-                      id="event-qr-code"
-                      value={`${window.location.origin}/tickets/${displayEvent._id}/book`} 
-                      size={160}
-                      bgColor={"#ffffff"}
-                      fgColor={"#000000"}
-                      level={"Q"}
-                      includeMargin={false}
-                    />
-                  </div>
-                  <button
-                    onClick={handleDownloadQR}
-                    className="flex items-center gap-2 text-sm font-bold text-zinc-600 hover:text-[#0A985D] transition-colors font-['Manrope'] bg-zinc-100 hover:bg-zinc-200 px-4 py-2 rounded-full"
-                  >
-                    <Download size={16} /> Download QR
-                  </button>
+                <div className="flex justify-center mb-8">
+                  <QRCodeSVG 
+                    value={`${window.location.origin}/tickets/${displayEvent._id}/book`} 
+                    size={160}
+                    bgColor={"#ffffff"}
+                    fgColor={"#000000"}
+                    level={"Q"}
+                    includeMargin={false}
+                  />
                 </div>
               </div>
             </div>
