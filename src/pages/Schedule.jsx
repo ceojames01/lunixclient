@@ -206,9 +206,9 @@ const Schedule = () => {
               
               <div className="flex flex-col flex-1 text-center md:text-left">
                 <span className="text-zinc-400 text-sm md:text-base font-medium tracking-wide mb-2">Event Place</span>
-                <div className="flex items-center justify-center md:justify-start gap-3">
-                  <MapPin size={32} className="text-[#e10600] shrink-0" />
-                  <span className="text-3xl md:text-5xl text-white font-black uppercase tracking-wider font-['Formula1'] mt-2">
+                <div className="flex items-center justify-center md:justify-start gap-2 md:gap-3">
+                  <MapPin className="w-6 h-6 md:w-8 md:h-8 text-[#e10600] shrink-0" />
+                  <span className="text-xl sm:text-2xl md:text-5xl text-white font-black uppercase tracking-wider font-['Formula1'] mt-1 md:mt-2 text-center md:text-left leading-tight break-words">
                     {schedule.locationName || 'Location Name'}
                   </span>
                 </div>
