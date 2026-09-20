@@ -13,10 +13,10 @@ const AdminLayout = ({ activeTab, onTabChange, onLogout, adminUser, children }) 
           onTabChange(tab);
           setIsMobileMenuOpen(false);
         }} 
-        onLogout={onLogout} 
-        adminUser={adminUser}
         isOpen={isMobileMenuOpen}
         setIsOpen={setIsMobileMenuOpen}
+        adminUser={adminUser}
+        onLogout={onLogout}
       />
       
       <div className="lg:pl-64 flex flex-col min-h-screen transition-all duration-300">

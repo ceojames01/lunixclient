@@ -3,6 +3,7 @@ import { Edit2, Clock, Camera, Save, Ticket } from 'lucide-react';
 import { QRCodeSVG } from 'qrcode.react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
+import { compressImageIfNeeded } from '../utils/imageCompressor';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/Footer';
 
@@ -86,26 +87,22 @@ const Profile = () => {
   };
 
   const handleImageUpload = async (e) => {
-    const file = e.target.files[0];
+    let file = e.target.files?.[0];
     if (!file) return;
 
-    const data = new FormData();
-    data.append('image', file);
-
     try {
-      const token = localStorage.getItem('userToken') || localStorage.getItem('adminToken');
-      const uploadRes = await api.post('/admin/upload', data, {
-        headers: { 
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'multipart/form-data'
-        }
-      });
+      if (file.type?.startsWith('image/')) {
+        file = await compressImageIfNeeded(file);
+      }
+
+      const data = new FormData();
+      data.append('image', file);
+
+      const uploadRes = await api.post('/admin/upload', data);
       
       if (uploadRes.data?.url) {
         const updatedData = { ...formData, avatar: uploadRes.data.url };
-        const profileRes = await api.put('/auth/profile', updatedData, {
-          headers: { Authorization: `Bearer ${token}` }
-        });
+        const profileRes = await api.put('/auth/profile', updatedData);
         
         if (profileRes.data?.user) {
           setUser(profileRes.data.user);
@@ -115,7 +112,11 @@ const Profile = () => {
       }
     } catch (error) {
       console.error(error);
-      toast.error('Failed to upload image');
+      toast.error('Failed to upload image: ' + (error.response?.data?.message || error.message));
+    } finally {
+      if (e.target && 'value' in e.target) {
+        e.target.value = '';
+      }
     }
   };
 

@@ -1,13 +1,14 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Ticket, Download, Calendar, Clock, MapPin } from 'lucide-react';
+import { ArrowLeft, Ticket, Download, Sparkles, QrCode } from 'lucide-react';
 import { toast } from 'react-hot-toast';
-import { QRCodeSVG } from 'qrcode.react';
 import { toPng } from 'html-to-image';
 import api from '../services/api';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/Footer';
 import GlobalLoader from '../components/common/GlobalLoader';
+import TicketPass from '../components/ticket/TicketPass';
+import { downloadStandaloneQRCode } from '../utils/qrDownload';
 
 const MyTickets = () => {
   const [orders, setOrders] = useState([]);
@@ -44,25 +45,21 @@ const MyTickets = () => {
     fetchTickets();
   }, [navigate]);
 
-  const downloadTicket = async (orderId, eventTitle) => {
+  const downloadTicket = async (orderId, eventTitle, ticketCode) => {
     try {
       const ticketElement = document.getElementById(`ticket-${orderId}`);
       if (!ticketElement) return;
 
       const dataUrl = await toPng(ticketElement, {
         pixelRatio: 3, // High resolution (3x)
-        backgroundColor: '#ffffff',
-        style: {
-          transform: 'scale(1)',
-          transformOrigin: 'top left'
-        }
+        backgroundColor: '#000000',
       });
 
       const link = document.createElement('a');
-      link.download = `${eventTitle.replace(/\s+/g, '_')}_Ticket.png`;
+      link.download = `${(eventTitle || 'Lunix_Ticket').replace(/\s+/g, '_')}_${ticketCode || orderId}.png`;
       link.href = dataUrl;
       link.click();
-      toast.success('Ticket downloaded successfully!');
+      toast.success('Ticket pass downloaded successfully!');
     } catch (error) {
       console.error('Error downloading ticket:', error);
       toast.error('Failed to download ticket');
@@ -70,127 +67,77 @@ const MyTickets = () => {
   };
 
   return (
-    <div className="min-h-screen bg-[#FDFCF0] text-black font-['Formula1'] tracking-wide flex flex-col">
+    <div className="min-h-screen bg-[#0d0d14] text-white tracking-wide flex flex-col">
       <Navbar />
-      <div className="max-w-7xl mx-auto px-6 py-12 flex-1 w-full">
-        <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#0A985D] hover:opacity-80 transition-opacity mb-8 font-sans">
-          <ArrowLeft size={20} strokeWidth={1.5} />
-          <span className="text-lg font-normal tracking-normal capitalize">Back</span>
-        </button>
-        <h1 className="text-2xl md:text-4xl font-['Formula1'] font-bold mb-12">My Tickets</h1>
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 flex-1 w-full">
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-8">
+          <div>
+            <button onClick={() => navigate(-1)} className="flex items-center gap-2 text-[#00b87c] hover:opacity-80 transition-opacity mb-3 font-sans">
+              <ArrowLeft size={18} strokeWidth={2} />
+              <span className="text-sm font-semibold tracking-normal capitalize">Back to Home</span>
+            </button>
+            <h1 className="text-2xl md:text-4xl font-['Orbitron'] font-black tracking-tight text-white flex items-center gap-3">
+              My Tickets <Sparkles className="w-6 h-6 text-amber-400" />
+            </h1>
+            <p className="text-zinc-400 text-sm mt-1">View, present, or download your official digital passes</p>
+          </div>
+        </div>
         
         {loading ? (
           <GlobalLoader />
         ) : (
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 font-manrope">
+          <div className="space-y-10">
             {orders.length > 0 ? (
               orders.map((order) => (
-                <div key={order._id} className="relative group">
-                  <div id={`ticket-${order._id}`} className="border border-zinc-200 rounded-xl overflow-hidden bg-white shadow-sm flex flex-col hover:shadow-md transition-shadow">
-                    <div className="bg-zinc-50/70 p-6 border-b-2 border-dashed border-zinc-200 flex justify-between items-start relative z-10">
-                      {/* Ticket Cutouts */}
-                      <div className="absolute -left-3 -bottom-3 w-6 h-6 bg-[#FDFCF0] rounded-full border border-zinc-200 z-20"></div>
-                      <div className="absolute -right-3 -bottom-3 w-6 h-6 bg-[#FDFCF0] rounded-full border border-zinc-200 z-20"></div>
-                      
-                      <div className="flex items-center gap-4">
-                        {order.event?.posterUrl && (
-                          <img 
-                            src={order.event.posterUrl} 
-                            alt={order.event.title} 
-                            className="w-20 h-28 rounded-md object-cover shadow-sm border border-zinc-200"
-                          />
-                        )}
-                        <div>
-                          <h4 className="font-bold text-xl md:text-2xl text-zinc-900 mb-2 leading-tight">{order.event?.title || 'Unknown Event'}</h4>
-                          <div className="flex flex-col gap-2 font-sans">
-                            <p className="text-xs text-zinc-600 font-semibold flex items-start gap-1.5 uppercase tracking-wide">
-                              <span className="mt-0.5 flex-shrink-0"><Calendar size={14} className="text-[#DA1A21]" /></span>
-                              <span className="flex-1 leading-relaxed">{order.event?.fullDate || 'TBD'}</span>
-                            </p>
-                            {order.event?.timeDetails && (
-                              <p className="text-xs text-zinc-600 font-semibold flex items-start gap-1.5 uppercase tracking-wide">
-                                <span className="mt-0.5 flex-shrink-0"><Clock size={14} className="text-[#DA1A21]" /></span>
-                                <span className="flex-1 leading-relaxed">{order.event.timeDetails}</span>
-                              </p>
-                            )}
-                            {order.event?.location && (
-                              <p className="text-xs text-zinc-600 font-semibold flex items-start gap-1.5 uppercase tracking-wide">
-                                <span className="mt-0.5 flex-shrink-0"><MapPin size={14} className="text-[#DA1A21]" /></span>
-                                <span className="flex-1 leading-relaxed">{order.event.location}</span>
-                              </p>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                      <div className="flex flex-col items-end gap-2">
-                        <span className={`text-xs font-bold px-3 py-1.5 rounded uppercase tracking-wider ${
-                          order.status === 'COMPLETED' ? 'bg-[#0e9f6e]/10 text-[#0e9f6e]' : 
-                          order.status === 'PENDING' ? 'bg-amber-100 text-amber-700' : 'bg-red-100 text-red-700'
-                        }`}>
-                          {order.status}
+                <div key={order._id} className="flex flex-col items-center gap-4 bg-[#141422]/60 p-4 sm:p-6 rounded-3xl border border-zinc-800/80 shadow-2xl backdrop-blur-sm">
+                  
+                  {/* Status & Action Header */}
+                  <div className="w-full max-w-[900px] flex justify-between items-center px-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className={`text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider border ${
+                        order.status === 'COMPLETED' ? 'bg-[#00b87c]/10 text-[#00b87c] border-[#00b87c]/30' : 
+                        order.status === 'PENDING' ? 'bg-amber-500/10 text-amber-400 border-amber-500/30' : 'bg-red-500/10 text-red-400 border-red-500/30'
+                      }`}>
+                        {order.status}
+                      </span>
+                      {order.isScanned && (
+                        <span className="bg-zinc-800 text-zinc-300 text-[10px] font-bold px-2.5 py-1 rounded-full uppercase tracking-wider border border-zinc-700">
+                          SCANNED / USED
                         </span>
-                        {order.isScanned && (
-                           <span className="bg-zinc-800 text-white text-[10px] font-bold px-2 py-1 rounded uppercase tracking-wider shadow-sm">
-                             USED
-                           </span>
-                        )}
-                      </div>
-                    </div>
-                  <div className="p-6 flex-1 flex flex-col sm:flex-row gap-6 items-center sm:items-start justify-between relative overflow-hidden bg-white">
-                    {/* Watermark */}
-                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-[80px] font-black text-zinc-50/50 -rotate-12 whitespace-nowrap pointer-events-none select-none z-0">
-                      LUNIX ENTERPRISES
+                      )}
                     </div>
 
-                    <div className="flex-1 w-full relative z-10">
-                      <p className="text-xs text-zinc-400 mb-3 font-bold uppercase tracking-widest">Order Details</p>
-                      <div className="space-y-2 mb-6">
-                        {order.tickets.map((t, i) => (
-                          <div key={i} className="flex justify-between text-base">
-                            <span className="text-zinc-700 font-medium">{t.quantity}x {t.name}</span>
-                            <span className="text-zinc-900 font-bold">KES {t.price * t.quantity}</span>
-                          </div>
-                        ))}
-                      </div>
-                      <div className="border-t border-dashed border-zinc-200 pt-4 flex justify-between">
-                        <span className="text-sm font-bold text-zinc-500 uppercase tracking-wider">Total Paid</span>
-                        <span className="text-lg font-bold text-[#DA1A21]">KES {order.totalAmount}</span>
-                      </div>
-                    </div>
-                    
-                    {order.status === 'COMPLETED' && order.qrCodeData && (
-                      <div className="flex flex-col items-center justify-center p-4 bg-zinc-50 border border-zinc-200 rounded-xl min-w-[150px] relative z-10 shadow-sm">
-                        <div className="bg-white p-2 rounded-lg shadow-sm border border-zinc-100 mb-4">
-                          <QRCodeSVG 
-                            value={order.qrCodeData} 
-                            size={100}
-                            bgColor={"#ffffff"}
-                            fgColor={"#000000"}
-                            level={"Q"}
-                          />
-                        </div>
-                        <fieldset className="w-full mt-2 border border-zinc-200 rounded-md px-2 pb-2 pt-0 text-center shadow-sm">
-                          <legend className="px-2 text-[9px] text-zinc-400 font-bold uppercase tracking-widest mx-auto bg-transparent">
-                            TICKET CODE
-                          </legend>
-                          <div className="text-sm text-zinc-800 font-mono font-bold tracking-wide w-full bg-transparent leading-none pb-1">
-                            {order.ticketCode || order.qrCodeData.split('-').slice(-2).join('-')}
-                          </div>
-                        </fieldset>
+                    {order.status === 'COMPLETED' && (
+                      <div className="flex items-center gap-2">
+                        <button 
+                          onClick={() => {
+                            downloadStandaloneQRCode(order.qrCodeData || `LUNIX-TKT-${order.ticketCode}`, order.ticketCode, order.event?.title);
+                            toast.success('QR Code downloaded!');
+                          }}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl border border-zinc-700 shadow-sm flex items-center gap-1.5 transition-all transform active:scale-95"
+                          title="Download standalone QR Code image"
+                        >
+                          <QrCode size={16} className="text-[#00b87c]" /> QR Code (PNG)
+                        </button>
+                        <button 
+                          onClick={() => downloadTicket(order._id, order.event?.title, order.ticketCode)}
+                          className="bg-[#00b87c] hover:bg-[#00a36e] text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl shadow-[0_4px_14px_rgba(0,184,124,0.3)] flex items-center gap-2 transition-all transform active:scale-95"
+                        >
+                          <Download size={16} /> Download Pass (PNG)
+                        </button>
                       </div>
                     )}
                   </div>
+
+                  {/* Rendered Live Ticket Pass */}
+                  <div className="w-full flex justify-center overflow-x-auto py-2">
+                    <TicketPass 
+                      order={order} 
+                      id={`ticket-${order._id}`} 
+                    />
+                  </div>
+
                 </div>
-                {order.status === 'COMPLETED' && (
-                  <button 
-                    onClick={() => downloadTicket(order._id, order.event?.title || 'Event')}
-                    className="absolute -top-3 -right-3 bg-zinc-900 text-white p-2.5 rounded-full shadow-md opacity-0 group-hover:opacity-100 hover:bg-[#DA1A21] hover:scale-110 transition-all duration-200 z-10"
-                    title="Download Ticket Image"
-                  >
-                    <Download size={18} />
-                  </button>
-                )}
-              </div>
               ))
             ) : (
               <div className="bg-white rounded-xl p-12 text-center border border-zinc-200 col-span-full shadow-sm">

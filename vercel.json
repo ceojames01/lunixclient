@@ -5,7 +5,7 @@
       "destination": "https://invigorating-radiance-production-f92e.up.railway.app/api/$1"
     },
     {
-      "source": "/(.*)",
+      "source": "/((?!.*\\.).*)",
       "destination": "/index.html"
     }
   ]

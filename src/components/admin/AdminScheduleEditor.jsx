@@ -249,7 +249,7 @@ const AdminScheduleEditor = ({
                 <ImageIcon className="w-6 h-6 text-zinc-400" />
                 <span className="text-sm font-bold text-zinc-900">{isUploading ? 'Uploading...' : 'Upload Image'}</span>
                 <span className="text-xs text-zinc-500">JPG, PNG, WebP</span>
-                <input type="file" className="hidden" onChange={e => { handleImageUpload(e, 'mediaUrl'); handleImageUpload(e, 'bannerImage'); }} accept="image/*" disabled={isUploading} />
+                <input type="file" className="hidden" onChange={e => handleImageUpload(e, ['mediaUrl', 'bannerImage'])} accept="image/*" disabled={isUploading} />
               </label>
             </div>
           </div>

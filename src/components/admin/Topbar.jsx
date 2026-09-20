@@ -6,8 +6,8 @@ const Topbar = ({ onTabChange, onLogout, adminUser, onMenuClick }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
 
-  const avatar = adminUser?.avatar || "https://ui-avatars.com/api/?name=Admin&background=random";
-  const name = adminUser?.name || "Admin";
+  const avatar = adminUser?.avatar || "https://upload.wikimedia.org/wikipedia/commons/3/31/Michael_Jackson_in_1988.jpg";
+  const name = adminUser?.name || "Michael Jackson";
   const email = adminUser?.email || "admin@lunix.com";
   return (
     <header className="relative h-20 bg-[#1e293b] border-b border-zinc-800/50 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40">

@@ -13,12 +13,17 @@ import {
   LogOut,
   TrendingUp,
   Ticket,
-  CreditCard
+  CreditCard,
+  Award,
+  MessageSquare,
+  Sparkles
 } from 'lucide-react';
 
 const navItems = [
   { name: 'Dashboard', id: 'dashboard', icon: LayoutDashboard },
   { name: 'Site view', path: '/', id: 'site_view', icon: Monitor, external: true },
+  { name: 'PSD Studio', id: 'photopea', icon: Sparkles },
+  { name: 'WhatsApp Status', id: 'whatsapp', icon: MessageSquare },
   { name: 'Event', id: 'event', icon: Calendar },
   { name: 'Hero', id: 'hero', icon: ImageIcon },
   { name: 'Schedule', id: 'schedule', icon: Clock },
@@ -28,15 +33,16 @@ const navItems = [
   { name: 'Users', id: 'users', icon: UserIcon },
   { name: 'Orders', id: 'orders', icon: Ticket },
   { name: 'Transactions', id: 'transactions', icon: CreditCard },
+  { name: 'Leaderboard', id: 'leaderboard', icon: Award },
   { name: 'Settings', id: 'settings', icon: Settings },
 ];
 
-const Sidebar = ({ activeTab, onTabChange, onLogout, adminUser, isOpen, setIsOpen }) => {
+const Sidebar = ({ activeTab, onTabChange, onLogout, adminUser, isOpen, setIsOpen, onWhatsAppClick }) => {
   const navigate = useNavigate();
 
-  const avatar = adminUser?.avatar || "https://ui-avatars.com/api/?name=Admin&background=random";
-  const name = adminUser?.name || "CEO James";
-  const email = adminUser?.email || "jameshalom217@gmail.com";
+  const avatar = adminUser?.avatar || "https://upload.wikimedia.org/wikipedia/commons/3/31/Michael_Jackson_in_1988.jpg";
+  const name = adminUser?.name || "Michael Jackson";
+  const email = adminUser?.email || "admin@lunix.com";
 
   return (
     <>

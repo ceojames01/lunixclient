@@ -55,7 +55,8 @@ const PurchaseModal = ({ isOpen, onClose, event, ticketCounts, totalAmount }) =>
 
   const countryOptions = useMemo(() => countryList().getData(), []);
 
-  const paymentMethods = ['MPESA', 'CARDS'];
+  const isAdminOrScanner = !!localStorage.getItem('adminToken');
+  const paymentMethods = isAdminOrScanner ? ['MPESA', 'CARDS', 'CASH'] : ['MPESA', 'CARDS'];
 
   const selectedTickets = event.ticketTiers?.map((tier, idx) => {
     return {
@@ -214,6 +215,11 @@ const PurchaseModal = ({ isOpen, onClose, event, ticketCounts, totalAmount }) =>
                       />
                     </div>
                     <p className="text-zinc-900 mt-6 font-medium text-lg">We will send a payment request to this phone number</p>
+                  </>
+                ) : selectedMethod === 'CASH' ? (
+                  <>
+                    <h3 className="text-xl text-zinc-900 mb-6 font-['Manrope']">Cash Payment</h3>
+                    <p className="text-zinc-900 font-medium text-lg">You have selected cash payment. This order will be marked as pending until approved.</p>
                   </>
                 ) : (
                   <>
@@ -374,6 +380,8 @@ const PurchaseModal = ({ isOpen, onClose, event, ticketCounts, totalAmount }) =>
                         headers: { Authorization: `Bearer ${token}` }
                       });
                       toast.success('Please check your phone for the M-PESA prompt.');
+                    } else if (selectedMethod === 'CASH') {
+                      toast.success('Cash order placed! Pending admin approval.');
                     } else {
                       toast.success('Payment confirmed successfully!');
                     }

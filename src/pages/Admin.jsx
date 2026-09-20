@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { Search, Trash2, Shield, User as UserIcon, Edit, Calendar, MapPin, X } from 'lucide-react';
+import { Search, Trash2, Shield, User as UserIcon, Edit, Calendar, MapPin, X, TrendingUp, Eye, Copy, MessageCircle, Ticket } from 'lucide-react';
 import api from '../services/api';
 import AdminLayout from '../components/admin/AdminLayout';
 import AdminHeroEditor from '../components/admin/AdminHeroEditor';
@@ -10,6 +10,9 @@ import AdminPartnerEditor from '../components/admin/AdminPartnerEditor';
 import AdminEventEditor from '../components/admin/AdminEventEditor';
 import AdminUserEditor from '../components/admin/AdminUserEditor';
 import AdminTicketEditor from '../components/admin/AdminTicketEditor';
+import PhotopeaStudio from '../components/admin/PhotopeaStudio';
+import WhatsAppAuthModal from '../components/admin/WhatsAppAuthModal';
+import { compressImageIfNeeded } from '../utils/imageCompressor';
 import { toast } from 'react-hot-toast';
 
 const Admin = () => {
@@ -18,11 +21,14 @@ const Admin = () => {
   const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('event');
 
-  const [data, setData] = useState({ event: [], hero: [], partners: [], leaders: [], editorials: [], schedule: [], config: {}, users: [], tickets: [] });
+  const [data, setData] = useState({ event: [], hero: [], partners: [], leaders: [], editorials: [], schedule: [], config: {}, users: [], tickets: [], leaderboard: [] });
   const [editingItem, setEditingItem] = useState(null);
   const [formData, setFormData] = useState({});
   const [isUploading, setIsUploading] = useState(false);
+  const [showConfigOptions, setShowConfigOptions] = useState(false);
+  const [selectedSeller, setSelectedSeller] = useState(null);
   const [adminUser, setAdminUser] = useState(null);
+  const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   useEffect(() => {
     if (token && token !== 'virtual_preview_token') {
@@ -52,7 +58,8 @@ const Admin = () => {
         config: '/admin/config',
         users: '/admin/users',
         orders: '/admin/orders',
-        transactions: '/admin/orders'
+        transactions: '/admin/orders',
+        leaderboard: '/admin/leaderboard'
       };
       const apiEndpoint = activeTab === 'settings' ? 'config' : activeTab;
       const res = await api.get(endpoints[apiEndpoint], {
@@ -188,7 +195,7 @@ const Admin = () => {
   };
 
   const handleImageUpload = async (e, field) => {
-    const file = e.target.files[0];
+    let file = e.target?.files?.[0];
     if (!file) return;
 
     if (token === 'virtual_preview_token') {
@@ -197,21 +204,41 @@ const Admin = () => {
     }
 
     setIsUploading(true);
-    const form = new FormData();
-    form.append('image', file);
 
     try {
+      if (file.type?.startsWith('image/')) {
+        file = await compressImageIfNeeded(file);
+      }
+
+      const form = new FormData();
+      form.append('image', file);
+
       const res = await api.post('/admin/upload', form, {
         headers: {
-          'Content-Type': 'multipart/form-data',
           Authorization: `Bearer ${token}`
         }
       });
-      setFormData(prev => ({ ...prev, [field]: res.data.url }));
+      const uploadedUrl = res.data?.url;
+      if (uploadedUrl) {
+        setFormData(prev => {
+          const updated = { ...prev };
+          if (Array.isArray(field)) {
+            field.forEach(f => { updated[f] = uploadedUrl; });
+          } else {
+            updated[field] = uploadedUrl;
+          }
+          return updated;
+        });
+        toast.success('Image uploaded successfully!', { style: { background: '#333', color: '#fff' } });
+      }
     } catch (error) {
+      console.error('Upload error:', error);
       toast.error('Upload failed: ' + (error.response?.data?.message || error.message), { style: { background: '#333', color: '#fff' } });
     } finally {
       setIsUploading(false);
+      if (e.target && 'value' in e.target) {
+        e.target.value = '';
+      }
     }
   };
 
@@ -324,7 +351,8 @@ const Admin = () => {
       }
       if (tab === 'settings') setFormData(data.config || {});
     }} onLogout={handleLogout} adminUser={adminUser}>
-      {activeTab !== 'orders' && activeTab !== 'transactions' && (
+      
+      {activeTab !== 'orders' && activeTab !== 'transactions' && activeTab !== 'whatsapp' && (
         <div className="mb-8 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 sm:gap-0">
           <div>
             <h2 className="text-3xl md:text-4xl font-bold text-white mb-1">
@@ -340,7 +368,7 @@ const Admin = () => {
             </p>
           </div>
           
-          {activeTab !== 'settings' && activeTab !== 'dashboard' && activeTab !== 'hero' && activeTab !== 'schedule' && (!editingItem || (activeTab !== 'leaders' && activeTab !== 'editorials' && activeTab !== 'partners' && activeTab !== 'event')) && (
+          {activeTab !== 'settings' && activeTab !== 'dashboard' && activeTab !== 'hero' && activeTab !== 'schedule' && activeTab !== 'leaderboard' && (!editingItem || (activeTab !== 'leaders' && activeTab !== 'editorials' && activeTab !== 'partners' && activeTab !== 'event')) && (
             <button 
               onClick={() => openForm()} 
               className="w-full sm:w-auto justify-center bg-[#00b87c] text-white font-bold px-4 py-2.5 rounded-lg hover:bg-[#00a36d] transition-colors flex items-center gap-2 shadow-lg shadow-[#00b87c]/20"
@@ -609,6 +637,8 @@ const Admin = () => {
                 <div className="col-span-full py-20 text-center text-zinc-500">No events found. Click "Add New" to create one.</div>
               )}
             </div>
+          ) : activeTab === 'photopea' ? (
+            <PhotopeaStudio token={token} />
           ) : (activeTab === 'orders' || activeTab === 'transactions') ? (
             <AdminTicketEditor 
               activeTab={activeTab}
@@ -616,6 +646,137 @@ const Admin = () => {
               setData={(newData) => setData(prev => ({ ...prev, [activeTab]: newData }))} 
               token={token} 
             />
+          ) : activeTab === 'whatsapp' ? (
+            <WhatsAppAuthModal token={token} onBack={() => setActiveTab('dashboard')} />
+          ) : activeTab === 'leaderboard' ? (
+            <div className="bg-[#0f172a] rounded-xl overflow-x-auto shadow-lg border border-zinc-800">
+              <table className="w-full text-left border-collapse whitespace-nowrap min-w-[600px]">
+                <thead className="bg-[#1e293b] border-b border-zinc-800">
+                  <tr>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider">Rank</th>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider">Seller</th>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider">Role</th>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider text-right">Tickets Sold</th>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider text-right">Revenue</th>
+                    <th className="p-5 text-xs font-bold uppercase text-zinc-400 tracking-wider text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-zinc-800/50">
+                  {(data.leaderboard || []).map((seller, index) => (
+                    <tr key={seller._id} className="hover:bg-zinc-800/30 transition-colors">
+                      <td className="p-5 text-white font-bold text-lg">
+                        #{index + 1}
+                      </td>
+                      <td className="p-5">
+                        <div className="font-bold text-white">{seller.name}</div>
+                        <div className="text-sm text-zinc-500">{seller.email}</div>
+                      </td>
+                      <td className="p-5">
+                        <span className={`px-2 py-1 rounded text-xs font-bold tracking-wider capitalize ${seller.role === 'admin' ? 'bg-[#3b82f6]/10 text-[#3b82f6]' : 'bg-[#00b87c]/10 text-[#00b87c]'}`}>
+                          {seller.role}
+                        </span>
+                      </td>
+                      <td className="p-5 text-right font-bold text-white text-lg">
+                        {seller.totalTicketsSold}
+                      </td>
+                      <td className="p-5 text-right font-bold text-[#00b87c]">
+                        KES {seller.totalRevenue?.toLocaleString()}
+                      </td>
+                      <td className="p-5 text-center">
+                        <button 
+                          onClick={() => setSelectedSeller(seller)}
+                          className="text-[#00b87c] hover:text-[#00a36e] transition-colors p-1.5 rounded-md hover:bg-[#00b87c]/10"
+                        >
+                          <Eye className="w-5 h-5" />
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                  {(!data.leaderboard || data.leaderboard.length === 0) && (
+                    <tr><td colSpan="6" className="p-10 text-center text-zinc-500">No sales data found.</td></tr>
+                  )}
+                </tbody>
+              </table>
+
+              {selectedSeller && (() => {
+                const tierCounts = {};
+                (selectedSeller.soldTickets || []).forEach(ticket => {
+                  if (tierCounts[ticket.name]) tierCounts[ticket.name].quantity += ticket.quantity;
+                  else tierCounts[ticket.name] = { quantity: ticket.quantity, price: ticket.price };
+                });
+
+                return (
+                  <div className="fixed inset-0 z-50 flex justify-end bg-black/60 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-[#0f172a] w-full max-w-2xl h-full border-l border-zinc-800 shadow-2xl overflow-hidden animate-in slide-in-from-right duration-300 flex flex-col">
+                      <div className="flex justify-between items-center p-6 border-b border-zinc-800 shrink-0">
+                        <h3 className="text-xl font-bold text-white">Sales Breakdown</h3>
+                        <button onClick={() => setSelectedSeller(null)} className="text-zinc-400 hover:text-white transition-colors">
+                          <X className="w-5 h-5" />
+                        </button>
+                      </div>
+                      
+                      <div className="p-6 space-y-6 overflow-y-auto flex-1">
+                        {/* Seller Information */}
+                        <div className="bg-[#1e293b]/50 rounded-xl p-6 border border-zinc-800/50">
+                          <div className="flex justify-between items-center mb-6">
+                            <h4 className="text-white font-bold text-lg uppercase">Seller Information</h4>
+                          </div>
+                          
+                          <div className="flex items-start gap-4">
+                            <div className="w-12 h-12 rounded-full bg-[#00b87c] flex items-center justify-center text-white shrink-0">
+                              <UserIcon className="w-6 h-6" />
+                            </div>
+                            <div>
+                              <h5 className="text-white font-bold text-lg">{selectedSeller.name}</h5>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-zinc-400 text-sm">{selectedSeller.email}</span>
+                                <button className="text-zinc-500 hover:text-white bg-zinc-800 p-1 rounded-md"><Copy className="w-3 h-3" /></button>
+                              </div>
+                              <div className="flex items-center gap-2 mt-1">
+                                <span className="text-zinc-400 text-sm">{selectedSeller.phone || 'N/A'}</span>
+                                <button className="text-[#25D366] hover:text-[#1da851] bg-[#25D366]/10 p-1 rounded-md"><MessageCircle className="w-3 h-3" /></button>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Items */}
+                        <div className="bg-[#1e293b]/50 rounded-xl p-6 border border-zinc-800/50">
+                          <h4 className="text-white font-bold text-lg uppercase mb-6">Items ({selectedSeller.totalTicketsSold || 0})</h4>
+                          <div className="space-y-4">
+                            {Object.entries(tierCounts).map(([tierName, details]) => (
+                              <div key={tierName} className="flex gap-4 p-4 bg-zinc-800/30 rounded-lg border border-zinc-700/50">
+                                <div className="w-16 h-16 bg-white rounded-lg flex items-center justify-center shrink-0">
+                                  <Ticket className="w-8 h-8 text-zinc-300" />
+                                </div>
+                                <div className="flex-1 flex flex-col justify-between">
+                                  <div className="flex justify-between items-start">
+                                    <div>
+                                      <h5 className="text-white font-bold">{tierName}</h5>
+                                      <p className="text-sm text-zinc-400 mt-1">Event Ticket</p>
+                                    </div>
+                                    <div className="bg-zinc-800 text-zinc-300 text-xs px-2 py-1 rounded">Qty {details.quantity}</div>
+                                  </div>
+                                  <div className="flex justify-between items-end mt-2">
+                                    <span className="text-sm text-zinc-500">KSh {details.price.toLocaleString()} each</span>
+                                    <span className="text-white font-bold font-mono">KSh {(details.quantity * details.price).toLocaleString()}</span>
+                                  </div>
+                                </div>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                        
+                        <div className="flex justify-between items-center p-6 border border-zinc-800/50 bg-[#1e293b]/30 rounded-xl font-bold">
+                          <span className="text-zinc-300">Total Revenue Generated</span>
+                          <span className="text-[#00b87c] text-2xl font-mono">KSh {selectedSeller.totalRevenue?.toLocaleString()}</span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
+            </div>
           ) : activeTab === 'users' && editingItem ? (
             <AdminUserEditor 
               formData={formData} 
