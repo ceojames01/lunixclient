@@ -12,7 +12,7 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     if (!config.headers.Authorization) {
-      const token = localStorage.getItem('adminToken') || localStorage.getItem('userToken') || localStorage.getItem('token');
+      const token = localStorage.getItem('scannerToken') || localStorage.getItem('adminToken') || localStorage.getItem('userToken') || localStorage.getItem('token');
       if (token) {
         config.headers.Authorization = `Bearer ${token}`;
       }
@@ -29,10 +29,15 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401) {
+      localStorage.removeItem('scannerToken');
       localStorage.removeItem('userToken');
       localStorage.removeItem('adminToken');
       localStorage.removeItem('token');
-      if (window.location.pathname !== '/login') {
+      
+      const currentPath = window.location.pathname;
+      if (currentPath.startsWith('/scanner') && currentPath !== '/scanner/login') {
+        window.location.href = '/scanner/login';
+      } else if (!currentPath.startsWith('/scanner') && currentPath !== '/login') {
         window.location.href = '/login';
       }
     }
