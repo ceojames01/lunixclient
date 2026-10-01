@@ -198,7 +198,7 @@ const A4PrintModal = ({ orders = [], onClose }) => {
         orientation: 'portrait',
         unit: 'mm',
         format: 'a4',
-        compress: true
+        compress: false
       });
 
       // A4 Canvas Dimensions (1650 width x 2333 height at 200 DPI equivalent)
@@ -291,15 +291,29 @@ const A4PrintModal = ({ orders = [], onClose }) => {
         }
 
         // Add A4 canvas image directly into PDF (210 x 297 mm)
-        const a4DataUrl = a4Canvas.toDataURL('image/jpeg', 0.95);
-        doc.addImage(a4DataUrl, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
+        doc.addImage(a4Canvas, 'JPEG', 0, 0, 210, 297, undefined, 'FAST');
       }
 
       const fileName = exportScope === 'current'
         ? `Lunix_Tickets_A4_Page_${currentPage}.pdf`
         : `Lunix_Tickets_A4_${totalTickets}pcs_${totalTargetPages}pages.pdf`;
 
-      doc.save(fileName);
+      // Save via native Blob stream (prevents V8 Invalid string length errors)
+      const pdfBlob = doc.output('blob');
+      const blobUrl = URL.createObjectURL(pdfBlob);
+      const downloadLink = document.createElement('a');
+      downloadLink.href = blobUrl;
+      downloadLink.download = fileName;
+      document.body.appendChild(downloadLink);
+      downloadLink.click();
+
+      setTimeout(() => {
+        if (document.body.contains(downloadLink)) {
+          document.body.removeChild(downloadLink);
+        }
+        URL.revokeObjectURL(blobUrl);
+      }, 3000);
+
       toast.success(`🎉 PDF downloaded successfully (${totalTargetPages} pages)!`, { id: 'pdf-toast', duration: 4000 });
     } catch (err) {
       console.error('PDF generation error:', err);
