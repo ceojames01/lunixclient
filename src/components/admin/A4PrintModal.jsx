@@ -106,23 +106,36 @@ const A4PrintModal = ({ orders = [], onClose }) => {
 
     // 2. Draw Dynamic QR Code inside White Stub Box (x: 1341, y: 66, w: 286, h: 282)
     try {
-      const qrDataUrl = await QRCode.toDataURL(qrData, {
-        margin: 0,
-        width: 270,
-        color: { dark: '#000000', light: '#ffffff' }
-      });
-      const qrImg = await new Promise((res) => {
-        const i = new Image();
-        i.onload = () => res(i);
-        i.onerror = () => res(null);
-        i.src = qrDataUrl;
-      });
-      if (qrImg) {
-        // Fill clean white background
-        ctx.fillStyle = '#ffffff';
-        ctx.fillRect(1341, 66, 286, 282);
-        // Draw QR image centered
-        ctx.drawImage(qrImg, 1349, 72, 270, 270);
+      let qrDataUrl = null;
+      const fn = (QRCode && typeof QRCode.toDataURL === 'function') 
+        ? QRCode.toDataURL 
+        : (QRCode && QRCode.default && typeof QRCode.default.toDataURL === 'function')
+          ? QRCode.default.toDataURL
+          : null;
+
+      if (fn) {
+        qrDataUrl = await fn(qrData, {
+          margin: 0,
+          width: 270,
+          color: { dark: '#000000', light: '#ffffff' }
+        });
+      }
+
+      if (qrDataUrl) {
+        const qrImg = await new Promise((res) => {
+          const i = new Image();
+          i.onload = () => res(i);
+          i.onerror = () => res(null);
+          i.src = qrDataUrl;
+        });
+
+        if (qrImg) {
+          // Fill clean white background
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(1341, 66, 286, 282);
+          // Draw QR image centered
+          ctx.drawImage(qrImg, 1349, 72, 270, 270);
+        }
       }
     } catch (e) {
       console.warn('QR Code render fallback:', e);
