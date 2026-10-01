@@ -8,6 +8,34 @@ import TicketPass from '../ticket/TicketPass';
 const TICKETS_PER_PAGE = 4;
 const TEMPLATE_IMAGE_SRC = '/images/ticket-psd-template-clean.png';
 
+// Robust loader to convert template image into a non-tainted Image element
+const loadTemplateImage = async () => {
+  try {
+    const res = await fetch(TEMPLATE_IMAGE_SRC);
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const blob = await res.blob();
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => resolve(null);
+        img.src = reader.result;
+      };
+      reader.onerror = () => resolve(null);
+      reader.readAsDataURL(blob);
+    });
+  } catch (err) {
+    console.warn('Fallback standard image load:', err);
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve(img);
+      img.onerror = () => resolve(null);
+      img.src = TEMPLATE_IMAGE_SRC;
+    });
+  }
+};
+
 const A4PrintModal = ({ orders = [], onClose }) => {
   const [currentPage, setCurrentPage] = useState(1);
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false);
@@ -18,17 +46,17 @@ const A4PrintModal = ({ orders = [], onClose }) => {
 
   const templateImgRef = useRef(null);
 
-  // Preload template image
+  // Preload template image safely as data-URL
   useEffect(() => {
-    const img = new Image();
-    img.crossOrigin = 'anonymous';
-    img.src = TEMPLATE_IMAGE_SRC;
-    img.onload = () => {
-      templateImgRef.current = img;
-      setTemplateLoaded(true);
-    };
-    img.onerror = () => {
-      console.warn('Could not preload template image');
+    let isMounted = true;
+    loadTemplateImage().then((img) => {
+      if (isMounted && img) {
+        templateImgRef.current = img;
+        setTemplateLoaded(true);
+      }
+    });
+    return () => {
+      isMounted = false;
     };
   }, []);
 
@@ -56,8 +84,14 @@ const A4PrintModal = ({ orders = [], onClose }) => {
     const ctx = canvas.getContext('2d');
 
     // 1. Draw PSD Background Template
-    if (bgImg && bgImg.complete) {
-      ctx.drawImage(bgImg, 0, 0, 1650, 600);
+    if (bgImg && bgImg.complete && bgImg.naturalWidth !== 0) {
+      try {
+        ctx.drawImage(bgImg, 0, 0, 1650, 600);
+      } catch (err) {
+        console.warn('Could not draw bg template, using fallback black background:', err);
+        ctx.fillStyle = '#000000';
+        ctx.fillRect(0, 0, 1650, 600);
+      }
     } else {
       ctx.fillStyle = '#000000';
       ctx.fillRect(0, 0, 1650, 600);
@@ -77,17 +111,19 @@ const A4PrintModal = ({ orders = [], onClose }) => {
         width: 270,
         color: { dark: '#000000', light: '#ffffff' }
       });
-      const qrImg = await new Promise((res, rej) => {
+      const qrImg = await new Promise((res) => {
         const i = new Image();
         i.onload = () => res(i);
-        i.onerror = rej;
+        i.onerror = () => res(null);
         i.src = qrDataUrl;
       });
-      // Fill clean white background
-      ctx.fillStyle = '#ffffff';
-      ctx.fillRect(1341, 66, 286, 282);
-      // Draw QR image centered
-      ctx.drawImage(qrImg, 1349, 72, 270, 270);
+      if (qrImg) {
+        // Fill clean white background
+        ctx.fillStyle = '#ffffff';
+        ctx.fillRect(1341, 66, 286, 282);
+        // Draw QR image centered
+        ctx.drawImage(qrImg, 1349, 72, 270, 270);
+      }
     } catch (e) {
       console.warn('QR Code render fallback:', e);
     }
@@ -151,14 +187,8 @@ const A4PrintModal = ({ orders = [], onClose }) => {
 
       // Ensure template image is ready
       let bgImg = templateImgRef.current;
-      if (!bgImg || !bgImg.complete) {
-        bgImg = await new Promise((resolve) => {
-          const img = new Image();
-          img.crossOrigin = 'anonymous';
-          img.src = TEMPLATE_IMAGE_SRC;
-          img.onload = () => resolve(img);
-          img.onerror = () => resolve(null);
-        });
+      if (!bgImg || !bgImg.complete || bgImg.naturalWidth === 0) {
+        bgImg = await loadTemplateImage();
       }
 
       const targetPages = exportScope === 'current' 

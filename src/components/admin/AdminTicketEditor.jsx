@@ -253,7 +253,10 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
             Clear Abandoned
           </button>
         ) : (
-          <button className="w-full sm:w-auto bg-[#00b87c] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#00a36e] transition-colors flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_rgba(0,184,124,0.3)]">
+          <button 
+            onClick={() => setShowA4Modal(true)}
+            className="w-full sm:w-auto bg-[#00b87c] text-white px-6 py-3 rounded-xl font-medium hover:bg-[#00a36e] transition-colors flex items-center justify-center gap-2 text-sm shadow-[0_4px_14px_rgba(0,184,124,0.3)]"
+          >
             <Download className="w-4 h-4" />
             Export PDF
           </button>

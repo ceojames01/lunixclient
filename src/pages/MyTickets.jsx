@@ -1,8 +1,9 @@
 import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Ticket, Download, Sparkles, QrCode } from 'lucide-react';
+import { ArrowLeft, Ticket, Download, Sparkles, QrCode, FileText } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { toPng } from 'html-to-image';
+import { jsPDF } from 'jspdf';
 import api from '../services/api';
 import Navbar from '../components/common/Navbar';
 import Footer from '../components/Footer';
@@ -13,6 +14,7 @@ import { downloadStandaloneQRCode } from '../utils/qrDownload';
 const MyTickets = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [downloadingId, setDownloadingId] = useState(null);
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -46,23 +48,67 @@ const MyTickets = () => {
   }, [navigate]);
 
   const downloadTicket = async (orderId, eventTitle, ticketCode) => {
+    const toastId = toast.loading('Generating Ticket Image...');
     try {
+      setDownloadingId(orderId);
       const ticketElement = document.getElementById(`ticket-${orderId}`);
-      if (!ticketElement) return;
+      if (!ticketElement) {
+        toast.error('Ticket element not found', { id: toastId });
+        return;
+      }
 
       const dataUrl = await toPng(ticketElement, {
-        pixelRatio: 3, // High resolution (3x)
+        pixelRatio: 3,
         backgroundColor: '#000000',
+        cacheBust: true,
       });
 
       const link = document.createElement('a');
       link.download = `${(eventTitle || 'Lunix_Ticket').replace(/\s+/g, '_')}_${ticketCode || orderId}.png`;
       link.href = dataUrl;
       link.click();
-      toast.success('Ticket pass downloaded successfully!');
+      toast.success('Ticket pass downloaded successfully!', { id: toastId });
     } catch (error) {
       console.error('Error downloading ticket:', error);
-      toast.error('Failed to download ticket');
+      toast.error('Failed to download ticket image. Try again.', { id: toastId });
+    } finally {
+      setDownloadingId(null);
+    }
+  };
+
+  const downloadTicketPdf = async (orderId, eventTitle, ticketCode) => {
+    const toastId = toast.loading('Generating Ticket PDF...');
+    try {
+      setDownloadingId(orderId);
+      const ticketElement = document.getElementById(`ticket-${orderId}`);
+      if (!ticketElement) {
+        toast.error('Ticket element not found', { id: toastId });
+        return;
+      }
+
+      const dataUrl = await toPng(ticketElement, {
+        pixelRatio: 3,
+        backgroundColor: '#000000',
+        cacheBust: true,
+      });
+
+      // Ticket pass standard proportions: 1650 x 600 mm aspect ratio
+      const pdf = new jsPDF({
+        orientation: 'landscape',
+        unit: 'mm',
+        format: [210, 80],
+        compress: true,
+      });
+
+      pdf.addImage(dataUrl, 'PNG', 5, 5, 200, 70, undefined, 'FAST');
+      const safeName = `${(eventTitle || 'Lunix_Ticket').replace(/\s+/g, '_')}_${ticketCode || orderId}.pdf`;
+      pdf.save(safeName);
+      toast.success('Ticket PDF downloaded successfully!', { id: toastId });
+    } catch (error) {
+      console.error('Error downloading ticket PDF:', error);
+      toast.error('Failed to export ticket PDF. Try downloading PNG pass instead.', { id: toastId });
+    } finally {
+      setDownloadingId(null);
     }
   };
 
@@ -108,22 +154,30 @@ const MyTickets = () => {
                     </div>
 
                     {order.status === 'COMPLETED' && (
-                      <div className="flex items-center gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
                         <button 
                           onClick={() => {
                             downloadStandaloneQRCode(order.qrCodeData || `LUNIX-TKT-${order.ticketCode}`, order.ticketCode, order.event?.title);
                             toast.success('QR Code downloaded!');
                           }}
-                          className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-semibold px-3.5 py-2 rounded-xl border border-zinc-700 shadow-sm flex items-center gap-1.5 transition-all transform active:scale-95"
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl border border-zinc-700 shadow-sm flex items-center gap-1.5 transition-all transform active:scale-95"
                           title="Download standalone QR Code image"
                         >
-                          <QrCode size={16} className="text-[#00b87c]" /> QR Code (PNG)
+                          <QrCode size={15} className="text-[#00b87c]" /> QR Code
                         </button>
                         <button 
                           onClick={() => downloadTicket(order._id, order.event?.title, order.ticketCode)}
-                          className="bg-[#00b87c] hover:bg-[#00a36e] text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl shadow-[0_4px_14px_rgba(0,184,124,0.3)] flex items-center gap-2 transition-all transform active:scale-95"
+                          disabled={downloadingId === order._id}
+                          className="bg-zinc-800 hover:bg-zinc-700 text-white text-xs sm:text-sm font-semibold px-3 py-2 rounded-xl border border-zinc-700 shadow-sm flex items-center gap-1.5 transition-all transform active:scale-95"
                         >
-                          <Download size={16} /> Download Pass (PNG)
+                          <Download size={15} className="text-[#00b87c]" /> PNG Pass
+                        </button>
+                        <button 
+                          onClick={() => downloadTicketPdf(order._id, order.event?.title, order.ticketCode)}
+                          disabled={downloadingId === order._id}
+                          className="bg-[#00b87c] hover:bg-[#00a36e] text-white text-xs sm:text-sm font-bold px-4 py-2 rounded-xl shadow-[0_4px_14px_rgba(0,184,124,0.3)] flex items-center gap-1.5 transition-all transform active:scale-95"
+                        >
+                          <FileText size={15} /> Download PDF
                         </button>
                       </div>
                     )}
