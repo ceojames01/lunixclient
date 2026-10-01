@@ -109,29 +109,29 @@ const TicketPass = ({ order, ticketIndex = 0, id, className = '' }) => {
         </span>
       </div>
 
-      {/* 5. DYNAMIC PRICE PILL ON MAIN CARD BOTTOM LEFT (Bottom: 3.5%, Left: 1.2%, Width: 9.5%, Height: 9%) */}
+      {/* 5. DYNAMIC PRICE PILL ON MAIN CARD BOTTOM LEFT */}
       <div 
         className="absolute flex items-center justify-center font-['Orbitron'] font-extrabold text-white text-center rounded-lg overflow-hidden"
         style={{
-          bottom: '3.8%',
-          left: '1.2%',
-          width: '9.7%',
-          height: '9.2%',
-          fontSize: 'clamp(8px, 1.3vw, 15px)'
+          bottom: '5.5%',
+          left: '2.0%',
+          width: '7.5%',
+          height: '7.8%',
+          fontSize: 'clamp(8px, 1.2vw, 15px)'
         }}
       >
         <span className="drop-shadow-[0_2px_4px_rgba(0,0,0,0.8)]">{price}/=</span>
       </div>
 
-      {/* 6. DYNAMIC TICKET CODE PILL ON MAIN CARD BOTTOM RIGHT (Bottom: 3.5%, Left: 59.8%, Width: 13.2%, Height: 8.8%) */}
+      {/* 6. DYNAMIC TICKET CODE PILL ON MAIN CARD BOTTOM RIGHT */}
       <div 
         className="absolute flex items-center justify-center font-mono font-black text-black text-center tracking-wider overflow-hidden rounded-md"
         style={{
-          bottom: '3.6%',
+          bottom: '4.8%',
           left: '59.6%',
-          width: '13.5%',
-          height: '8.8%',
-          fontSize: 'clamp(7px, 1.1vw, 13px)'
+          width: '13.2%',
+          height: '7.8%',
+          fontSize: 'clamp(7px, 1.05vw, 13px)'
         }}
       >
         <span className="select-all truncate px-1">{ticketCode}</span>

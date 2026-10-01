@@ -121,19 +121,19 @@ const A4PrintModal = ({ orders = [], onClose }) => {
     ctx.fillText(ticketCode, 0, 0);
     ctx.restore();
 
-    // 6. Draw Price Pill on Main Card (x: 100, y: 548)
+    // 6. Draw Price Pill on Main Card (x: 95, y: 544)
     ctx.fillStyle = '#ffffff';
     ctx.font = 'bold 24px "Orbitron", monospace, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(`${price}/=`, 100, 548);
+    ctx.fillText(`${price}/=`, 95, 544);
 
-    // 7. Draw Ticket Code on Main Card (x: 1095, y: 548)
+    // 7. Draw Ticket Code on Main Card (x: 1092, y: 547)
     ctx.fillStyle = '#000000';
     ctx.font = '900 20px monospace, sans-serif';
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.fillText(ticketCode, 1095, 548);
+    ctx.fillText(ticketCode, 1092, 547);
 
     return canvas;
   };
