@@ -4,36 +4,18 @@ import { toast } from 'react-hot-toast';
 import { jsPDF } from 'jspdf';
 import QRCode from 'qrcode';
 import TicketPass from '../ticket/TicketPass';
+import { TICKET_TEMPLATE_DATA_URI } from '../../assets/ticketTemplate';
 
 const TICKETS_PER_PAGE = 4;
-const TEMPLATE_IMAGE_SRC = '/images/ticket-psd-template-clean.png';
 
-// Robust loader to convert template image into a non-tainted Image element
+// Direct synchronous non-tainting Image loader from embedded base64
 const loadTemplateImage = async () => {
-  try {
-    const res = await fetch(TEMPLATE_IMAGE_SRC);
-    if (!res.ok) throw new Error(`HTTP ${res.status}`);
-    const blob = await res.blob();
-    return new Promise((resolve) => {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const img = new Image();
-        img.onload = () => resolve(img);
-        img.onerror = () => resolve(null);
-        img.src = reader.result;
-      };
-      reader.onerror = () => resolve(null);
-      reader.readAsDataURL(blob);
-    });
-  } catch (err) {
-    console.warn('Fallback standard image load:', err);
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.onload = () => resolve(img);
-      img.onerror = () => resolve(null);
-      img.src = TEMPLATE_IMAGE_SRC;
-    });
-  }
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.onload = () => resolve(img);
+    img.onerror = () => resolve(null);
+    img.src = TICKET_TEMPLATE_DATA_URI;
+  });
 };
 
 const A4PrintModal = ({ orders = [], onClose }) => {
@@ -46,7 +28,7 @@ const A4PrintModal = ({ orders = [], onClose }) => {
 
   const templateImgRef = useRef(null);
 
-  // Preload template image safely as data-URL
+  // Preload template image safely from data-URL
   useEffect(() => {
     let isMounted = true;
     loadTemplateImage().then((img) => {
@@ -321,7 +303,7 @@ const A4PrintModal = ({ orders = [], onClose }) => {
       toast.success(`🎉 PDF downloaded successfully (${totalTargetPages} pages)!`, { id: 'pdf-toast', duration: 4000 });
     } catch (err) {
       console.error('PDF generation error:', err);
-      toast.error('Failed to export PDF. Please check console or use browser Print button.', { id: 'pdf-toast', duration: 5000 });
+      toast.error(`PDF error: ${err?.message || 'Generation failed'}. You can also use the browser "Print A4 Sheet" button!`, { id: 'pdf-toast', duration: 7000 });
     } finally {
       setIsGeneratingPdf(false);
       setPdfProgress(0);
