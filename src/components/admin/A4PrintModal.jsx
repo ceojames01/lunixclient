@@ -298,21 +298,38 @@ const A4PrintModal = ({ orders = [], onClose }) => {
         ? `Lunix_Tickets_A4_Page_${currentPage}.pdf`
         : `Lunix_Tickets_A4_${totalTickets}pcs_${totalTargetPages}pages.pdf`;
 
-      // Save via native Blob stream (prevents V8 Invalid string length errors)
-      const pdfBlob = doc.output('blob');
-      const blobUrl = URL.createObjectURL(pdfBlob);
-      const downloadLink = document.createElement('a');
-      downloadLink.href = blobUrl;
-      downloadLink.download = fileName;
-      document.body.appendChild(downloadLink);
-      downloadLink.click();
-
-      setTimeout(() => {
-        if (document.body.contains(downloadLink)) {
-          document.body.removeChild(downloadLink);
+      // Save via native Blob stream (standard across all browsers)
+      let blobUrl = null;
+      try {
+        const arrayBuffer = doc.output('arraybuffer');
+        const pdfBlob = new Blob([arrayBuffer], { type: 'application/pdf' });
+        blobUrl = URL.createObjectURL(pdfBlob);
+      } catch (err1) {
+        try {
+          blobUrl = doc.output('bloburl');
+        } catch (err2) {
+          const raw = doc.output('blob');
+          const pdfBlob = raw instanceof Blob ? raw : new Blob([raw], { type: 'application/pdf' });
+          blobUrl = URL.createObjectURL(pdfBlob);
         }
-        URL.revokeObjectURL(blobUrl);
-      }, 3000);
+      }
+
+      if (blobUrl) {
+        const downloadLink = document.createElement('a');
+        downloadLink.href = blobUrl;
+        downloadLink.download = fileName;
+        document.body.appendChild(downloadLink);
+        downloadLink.click();
+
+        setTimeout(() => {
+          if (document.body.contains(downloadLink)) {
+            document.body.removeChild(downloadLink);
+          }
+          try {
+            URL.revokeObjectURL(blobUrl);
+          } catch (_) {}
+        }, 5000);
+      }
 
       toast.success(`🎉 PDF downloaded successfully (${totalTargetPages} pages)!`, { id: 'pdf-toast', duration: 4000 });
     } catch (err) {
