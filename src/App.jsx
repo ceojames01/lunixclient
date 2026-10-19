@@ -1,4 +1,4 @@
-import { BrowserRouter as Router, Routes, Route, Outlet } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Outlet, Navigate } from 'react-router-dom';
 import { Toaster } from 'react-hot-toast';
 import Navbar from './components/common/Navbar';
 import Footer from './components/Footer';
@@ -53,7 +53,7 @@ const App = () => (
       <Route path="/tickets/:id/book" element={<Booking />} />
       <Route path="/schedule" element={<Schedule />} />
       <Route path="/admin" element={<Admin />} />
-      <Route path="/scanner/login" element={<ScannerLogin />} />
+      <Route path="/scanner/login" element={<Navigate to="/login" replace />} />
       <Route path="/scanner/dashboard" element={<ScannerDashboard />} />
     </Routes>
   </Router>

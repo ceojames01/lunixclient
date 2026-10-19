@@ -20,12 +20,23 @@ const Login = () => {
     e.preventDefault();
     try {
       const res = await api.post('/auth/login', { email, password });
+      const user = res.data?.user;
+      const token = res.data?.token;
       
-      if (res.data.user.role === 'admin') {
-        localStorage.setItem('adminToken', res.data.token);
+      if (user?.role === 'admin') {
+        localStorage.setItem('adminToken', token);
+        localStorage.setItem('userToken', token);
+        toast.success('Welcome back, Admin!');
         navigate('/admin');
+      } else if (user?.role === 'scanner') {
+        localStorage.setItem('scannerToken', token);
+        localStorage.setItem('scannerUser', JSON.stringify(user));
+        localStorage.setItem('userToken', token);
+        toast.success('Welcome to Scanner Portal!');
+        navigate('/scanner/dashboard');
       } else {
-        localStorage.setItem('userToken', res.data.token);
+        localStorage.setItem('userToken', token);
+        toast.success('Login successful!');
         navigate('/');
       }
     } catch (error) {

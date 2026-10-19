@@ -30,14 +30,13 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.removeItem('scannerToken');
+      localStorage.removeItem('scannerUser');
       localStorage.removeItem('userToken');
       localStorage.removeItem('adminToken');
       localStorage.removeItem('token');
       
       const currentPath = window.location.pathname;
-      if (currentPath.startsWith('/scanner') && currentPath !== '/scanner/login') {
-        window.location.href = '/scanner/login';
-      } else if (!currentPath.startsWith('/scanner') && currentPath !== '/login') {
+      if (currentPath !== '/login') {
         window.location.href = '/login';
       }
     }

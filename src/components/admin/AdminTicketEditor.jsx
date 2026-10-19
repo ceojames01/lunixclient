@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Search, Eye, Download, Trash2, Ticket, CreditCard, ChevronDown, X, User, Copy, MessageCircle, Calendar, Truck, CheckCircle, Printer, QrCode } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import { toPng } from 'html-to-image';
@@ -7,9 +7,10 @@ import TicketPass from '../ticket/TicketPass';
 import A4PrintModal from './A4PrintModal';
 import { downloadStandaloneQRCode } from '../../utils/qrDownload';
 
-const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
+const AdminTicketEditor = ({ activeTab, data, setData, token, events = [] }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All Status');
+  const [eventFilter, setEventFilter] = useState('all');
   const [selectedTransaction, setSelectedTransaction] = useState(null);
   const [ticketModalOrder, setTicketModalOrder] = useState(null);
   const [viewMode, setViewMode] = useState('table'); // 'table' | 'gallery'
@@ -22,6 +23,23 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
   const [bulkPrice, setBulkPrice] = useState('0');
   const [bulkNote, setBulkNote] = useState('Physical Gate Passes');
   const [isBulkGenerating, setIsBulkGenerating] = useState(false);
+  const [eventList, setEventList] = useState(events);
+  const [bulkEventId, setBulkEventId] = useState('');
+
+  // Keep eventList updated
+  useEffect(() => {
+    if (events && events.length > 0) {
+      setEventList(events);
+      if (!bulkEventId) setBulkEventId(events[0]._id);
+    } else {
+      api.get('/content/events').then(res => {
+        if (res.data?.data?.length > 0) {
+          setEventList(res.data.data);
+          if (!bulkEventId) setBulkEventId(res.data.data[0]._id);
+        }
+      }).catch(console.error);
+    }
+  }, [events]);
 
   const handleBulkGenerate = async (e) => {
     if (e) e.preventDefault();
@@ -32,6 +50,7 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
     }
 
     const authToken = token || localStorage.getItem('adminToken') || localStorage.getItem('userToken');
+    const selectedEv = eventList.find(e => e._id === bulkEventId) || eventList[0];
 
     if (token === 'virtual_preview_token') {
       const mockTickets = [];
@@ -43,7 +62,7 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
         mockTickets.push({
           _id: `mock-${Date.now()}-${i}`,
           user: { name: 'Admin User', email: 'admin@lunix.com' },
-          event: { title: 'CAMPUS CULTURE', fullDate: 'FRIDAY 25TH SEPTEMBER 2026' },
+          event: selectedEv || { title: 'CAMPUS CULTURE', fullDate: 'FRIDAY 25TH SEPTEMBER 2026' },
           tickets: [{ name: bulkTier, price: Number(bulkPrice) || 0, quantity: 1 }],
           totalAmount: Number(bulkPrice) || 0,
           paymentMethod: 'CASH',
@@ -66,6 +85,7 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
       try {
         res = await api.post('/admin/orders/bulk-generate', {
           count,
+          eventId: bulkEventId,
           tierName: bulkTier,
           price: Number(bulkPrice) || 0,
           note: bulkNote
@@ -76,6 +96,7 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
         if (firstErr.response?.status === 404) {
           res = await api.post('/orders/bulk-generate', {
             count,
+            eventId: bulkEventId,
             tierName: bulkTier,
             price: Number(bulkPrice) || 0,
             note: bulkNote
@@ -88,7 +109,7 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
       }
 
       if (res.data?.success) {
-        toast.success(`🎉 Generated ${res.data.count} tickets successfully!`, { duration: 5000 });
+        toast.success(`🎉 Generated ${res.data.count} tickets for ${selectedEv?.title || 'event'}!`, { duration: 5000 });
         if (res.data.data) {
           setData([...res.data.data, ...data]);
         }
@@ -102,18 +123,22 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
     }
   };
 
-  const filteredData = data.filter(order => {
+  const filteredData = (data || []).filter(order => {
+    if (!order) return false;
     const matchesSearch = 
       order.ticketCode?.toLowerCase().includes(searchTerm.toLowerCase()) || 
       order.user?.email?.toLowerCase().includes(searchTerm.toLowerCase()) ||
       order.billingInfo?.phone?.includes(searchTerm) ||
       order.paymentReference?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      order._id.toLowerCase().includes(searchTerm.toLowerCase());
+      order._id?.toLowerCase().includes(searchTerm.toLowerCase());
       
     const matchesStatus = statusFilter === 'All Status' || 
-                          order.status.toLowerCase() === statusFilter.toLowerCase();
+                          order.status?.toLowerCase() === statusFilter.toLowerCase();
                           
-    return matchesSearch && matchesStatus;
+    const orderEvId = order.event?._id?.toString() || (typeof order.event === 'string' ? order.event : null);
+    const matchesEvent = eventFilter === 'all' || orderEvId === eventFilter;
+
+    return matchesSearch && matchesStatus && matchesEvent;
   });
 
   const [isUpdating, setIsUpdating] = useState(false);
@@ -243,6 +268,23 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
             <option>Completed</option>
             <option>Pending</option>
             <option>Failed</option>
+          </select>
+          <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4 pointer-events-none" />
+        </div>
+
+        {/* Event Filter */}
+        <div className="relative min-w-[190px] w-full sm:w-auto">
+          <select 
+            value={eventFilter}
+            onChange={(e) => setEventFilter(e.target.value)}
+            className="w-full bg-[#22272e] text-white pl-4 pr-10 py-3 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none appearance-none font-medium text-sm cursor-pointer transition-colors"
+          >
+            <option value="all">All Events</option>
+            {eventList.map(ev => (
+              <option key={ev._id} value={ev._id}>
+                {ev.eventCode ? `[${ev.eventCode}] ` : ''}{ev.title}
+              </option>
+            ))}
           </select>
           <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-400 w-4 h-4 pointer-events-none" />
         </div>
@@ -856,19 +898,21 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
 
       {/* Bulk Ticket Generator Modal */}
       {showBulkModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md animate-in fade-in duration-200">
-          <div className="bg-[#0f172a] w-full max-w-xl rounded-2xl border border-zinc-800 shadow-2xl p-6 sm:p-8 relative flex flex-col gap-6 animate-in zoom-in-95 duration-200">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/85 backdrop-blur-md overflow-y-auto animate-in fade-in duration-200">
+          <div className="bg-[#0f172a] w-full max-w-xl rounded-2xl border border-zinc-800 shadow-2xl relative flex flex-col max-h-[92vh] overflow-hidden animate-in zoom-in-95 duration-200">
             
-            <div className="flex justify-between items-start pb-4 border-b border-zinc-800">
+            {/* Header: Fixed at top */}
+            <div className="flex justify-between items-center p-4 sm:p-5 border-b border-zinc-800 bg-[#1e293b]/60 shrink-0">
               <div>
-                <h3 className="text-2xl font-bold text-white flex items-center gap-2.5">
-                  <Ticket className="w-6 h-6 text-[#00b87c]" /> Bulk Ticket Generator
+                <h3 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2">
+                  <Ticket className="w-5 h-5 text-[#00b87c]" /> Bulk Ticket Generator
                 </h3>
-                <p className="text-xs text-zinc-400 mt-1">
-                  Generate multiple tickets with unique QR codes & ticket codes without needing customer emails or phones.
+                <p className="text-xs text-zinc-400 mt-0.5">
+                  Generate multiple tickets with unique QR codes & ticket codes instantly.
                 </p>
               </div>
               <button 
+                type="button"
                 onClick={() => setShowBulkModal(false)}
                 disabled={isBulkGenerating}
                 className="text-zinc-400 hover:text-white p-1.5 rounded-lg hover:bg-zinc-800 transition-colors"
@@ -877,122 +921,193 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
               </button>
             </div>
 
-            <form onSubmit={handleBulkGenerate} className="space-y-5">
+            {/* Form with Scrollable Content and Sticky Footer */}
+            <form onSubmit={handleBulkGenerate} className="flex-1 flex flex-col min-h-0 overflow-hidden">
               
-              {/* Ticket Quantity */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                  Number of Tickets to Generate <span className="text-red-400">*</span>
-                </label>
-                <input 
-                  type="number" 
-                  min="1" 
-                  max="2000"
-                  value={bulkCount}
-                  onChange={(e) => setBulkCount(e.target.value)}
-                  placeholder="e.g. 400"
-                  required
-                  disabled={isBulkGenerating}
-                  className="w-full bg-[#1e293b] text-white text-lg font-bold px-4 py-3 rounded-xl border border-zinc-700 focus:border-[#00b87c] focus:ring-1 focus:ring-[#00b87c] outline-none transition-all"
-                />
-                {/* Quick Selection Chips */}
-                <div className="flex flex-wrap gap-2 mt-2.5">
-                  {[10, 50, 100, 200, 400, 500, 1000].map((num) => (
-                    <button
-                      key={num}
-                      type="button"
-                      onClick={() => setBulkCount(num.toString())}
-                      className={`text-xs px-3 py-1.5 rounded-lg font-semibold border transition-all ${
-                        bulkCount === num.toString()
-                          ? 'bg-[#00b87c] text-white border-[#00b87c]'
-                          : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500 hover:text-white'
-                      }`}
-                    >
-                      {num} Tickets
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              {/* Pass Tier / Category */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              {/* Scrollable Form Body */}
+              <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-4">
+                
+                {/* Select Target Event */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                    Pass Category / Tier
+                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-1.5">
+                    Select Event <span className="text-red-400">*</span>
                   </label>
                   <select
-                    value={bulkTier}
-                    onChange={(e) => setBulkTier(e.target.value)}
+                    value={bulkEventId}
+                    onChange={(e) => {
+                      const id = e.target.value;
+                      setBulkEventId(id);
+                      const ev = eventList.find(item => item._id === id);
+                      if (ev?.ticketTiers?.length > 0) {
+                        setBulkTier(ev.ticketTiers[0].name);
+                        setBulkPrice(ev.ticketTiers[0].price.toString());
+                      }
+                    }}
                     disabled={isBulkGenerating}
-                    className="w-full bg-[#1e293b] text-white px-4 py-3 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-sm font-medium"
+                    className="w-full bg-[#1e293b] text-white px-3.5 py-2.5 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-xs sm:text-sm font-semibold"
                   >
-                    <option value="REGULAR PASS">REGULAR PASS</option>
-                    <option value="VIP PASS">VIP PASS</option>
-                    <option value="VVIP PASS">VVIP PASS</option>
-                    <option value="EARLY BIRD">EARLY BIRD</option>
-                    <option value="COMPLIMENTARY PASS">COMPLIMENTARY PASS</option>
+                    {eventList.map(ev => (
+                      <option key={ev._id} value={ev._id}>
+                        {ev.eventCode ? `[${ev.eventCode}] ` : ''}{ev.title} — {ev.location} ({ev.dateRange || ev.fullDate}) {ev.ticketTemplateUrl || ev.psdUrl ? '🎨 (Custom PSD Layout)' : '📄 (Default Layout)'}
+                      </option>
+                    ))}
                   </select>
-                </div>
 
-                {/* Price per Ticket */}
+                  {/* Event Ticket Layout Status Banner */}
+                  {(() => {
+                    const ev = eventList.find(item => item._id === bulkEventId) || eventList[0];
+                    if (!ev) return null;
+                    const hasCustom = !!(ev.ticketTemplateUrl || ev.psdUrl);
+                    return (
+                      <div className="mt-2.5 p-2.5 rounded-xl bg-zinc-900 border border-zinc-800 flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <div className={`w-7 h-7 rounded-lg flex items-center justify-center font-bold text-[10px] shrink-0 ${
+                            hasCustom ? 'bg-indigo-600 text-white' : 'bg-zinc-800 text-zinc-400'
+                          }`}>
+                            {hasCustom ? 'PSD' : 'TKT'}
+                          </div>
+                          <div className="min-w-0 text-xs">
+                            <span className="font-bold text-white block truncate">
+                              {ev.title}
+                            </span>
+                            <span className={`text-[10px] block ${hasCustom ? 'text-indigo-400 font-medium' : 'text-zinc-400'}`}>
+                              {hasCustom 
+                                ? '🎨 Custom PSD ticket layout will be applied to this batch' 
+                                : '📄 Default Lunix ticket layout will be applied'}
+                            </span>
+                          </div>
+                        </div>
+
+                        <div className="w-16 aspect-[1650/600] rounded overflow-hidden border border-zinc-700 shrink-0 bg-black">
+                          <img 
+                            src={ev.ticketTemplateUrl || ev.psdUrl || '/images/ticket-psd-template-clean.png'} 
+                            alt="Layout Preview" 
+                            className="w-full h-full object-cover" 
+                          />
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </div>
+                
+                {/* Ticket Quantity */}
                 <div>
-                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                    Price per Ticket (KSh)
+                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-1.5">
+                    Number of Tickets to Generate <span className="text-red-400">*</span>
                   </label>
                   <input 
                     type="number" 
-                    min="0"
-                    value={bulkPrice}
-                    onChange={(e) => setBulkPrice(e.target.value)}
-                    placeholder="0"
+                    min="1" 
+                    max="2000"
+                    value={bulkCount}
+                    onChange={(e) => setBulkCount(e.target.value)}
+                    placeholder="e.g. 400"
+                    required
                     disabled={isBulkGenerating}
-                    className="w-full bg-[#1e293b] text-white px-4 py-3 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-sm font-medium"
+                    className="w-full bg-[#1e293b] text-white text-base font-bold px-3.5 py-2.5 rounded-xl border border-zinc-700 focus:border-[#00b87c] focus:ring-1 focus:ring-[#00b87c] outline-none transition-all"
                   />
+                  {/* Quick Selection Chips */}
+                  <div className="flex flex-wrap gap-1.5 mt-2">
+                    {[10, 50, 100, 200, 400, 500, 1000].map((num) => (
+                      <button
+                        key={num}
+                        type="button"
+                        onClick={() => setBulkCount(num.toString())}
+                        className={`text-[11px] px-2.5 py-1 rounded-lg font-semibold border transition-all ${
+                          bulkCount === num.toString()
+                            ? 'bg-[#00b87c] text-white border-[#00b87c]'
+                            : 'bg-zinc-800 text-zinc-300 border-zinc-700 hover:border-zinc-500 hover:text-white'
+                        }`}
+                      >
+                        {num} Tickets
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Pass Tier / Category */}
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Pass Category / Tier
+                    </label>
+                    <select
+                      value={bulkTier}
+                      onChange={(e) => setBulkTier(e.target.value)}
+                      disabled={isBulkGenerating}
+                      className="w-full bg-[#1e293b] text-white px-3.5 py-2.5 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-xs sm:text-sm font-medium"
+                    >
+                      <option value="REGULAR PASS">REGULAR PASS</option>
+                      <option value="VIP PASS">VIP PASS</option>
+                      <option value="VVIP PASS">VVIP PASS</option>
+                      <option value="EARLY BIRD">EARLY BIRD</option>
+                      <option value="COMPLIMENTARY PASS">COMPLIMENTARY PASS</option>
+                    </select>
+                  </div>
+
+                  {/* Price per Ticket */}
+                  <div>
+                    <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-1.5">
+                      Price per Ticket (KSh)
+                    </label>
+                    <input 
+                      type="number" 
+                      min="0"
+                      value={bulkPrice}
+                      onChange={(e) => setBulkPrice(e.target.value)}
+                      placeholder="0"
+                      disabled={isBulkGenerating}
+                      className="w-full bg-[#1e293b] text-white px-3.5 py-2.5 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-xs sm:text-sm font-medium"
+                    />
+                  </div>
+                </div>
+
+                {/* Batch Reference / Note */}
+                <div>
+                  <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-1.5">
+                    Batch Tag / Print Reference
+                  </label>
+                  <input 
+                    type="text" 
+                    value={bulkNote}
+                    onChange={(e) => setBulkNote(e.target.value)}
+                    placeholder="e.g. Physical Gate Passes Batch #1"
+                    disabled={isBulkGenerating}
+                    className="w-full bg-[#1e293b] text-white px-3.5 py-2.5 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-xs sm:text-sm"
+                  />
+                </div>
+
+                {/* Info Box */}
+                <div className="bg-[#1e293b]/50 p-3.5 rounded-xl border border-zinc-800 text-xs text-zinc-300 space-y-1">
+                  <p className="font-bold text-white flex items-center gap-1.5">
+                    <CheckCircle className="w-4 h-4 text-[#00b87c]" /> Auto-Allocation & Verification
+                  </p>
+                  <p className="text-zinc-400 text-[11px] leading-relaxed">
+                    All <strong className="text-white">{bulkCount || 0} tickets</strong> will be created as <strong>COMPLETED</strong> with unique scannable QR codes and unique ticket codes, ready for A4 printing and mobile scanning.
+                  </p>
                 </div>
               </div>
 
-              {/* Batch Reference / Note */}
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-zinc-300 mb-2">
-                  Batch Tag / Print Reference
-                </label>
-                <input 
-                  type="text" 
-                  value={bulkNote}
-                  onChange={(e) => setBulkNote(e.target.value)}
-                  placeholder="e.g. Physical Gate Passes Batch #1"
-                  disabled={isBulkGenerating}
-                  className="w-full bg-[#1e293b] text-white px-4 py-3 rounded-xl border border-zinc-700 focus:border-[#00b87c] outline-none text-sm"
-                />
-              </div>
-
-              {/* Info Box */}
-              <div className="bg-[#1e293b]/60 p-4 rounded-xl border border-zinc-800 text-xs text-zinc-300 space-y-1.5">
-                <p className="font-bold text-white flex items-center gap-1.5">
-                  <CheckCircle className="w-4 h-4 text-[#00b87c]" /> Auto-Allocation & Verification
-                </p>
-                <p className="text-zinc-400 leading-relaxed">
-                  All <strong className="text-white">{bulkCount || 0} tickets</strong> will be created as <strong>COMPLETED</strong> with unique scannable QR codes and unique ticket codes. They will appear immediately under your <strong>Orders</strong> and your personal <strong>My Tickets</strong> page.
-                </p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex justify-end items-center gap-3 pt-3 border-t border-zinc-800">
+              {/* Action Buttons: Sticky at Bottom */}
+              <div className="flex justify-end items-center gap-3 p-4 sm:p-5 border-t border-zinc-800 bg-[#1e293b]/70 shrink-0">
                 <button
                   type="button"
                   onClick={() => setShowBulkModal(false)}
                   disabled={isBulkGenerating}
-                  className="px-5 py-3 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
+                  className="px-4 py-2.5 rounded-xl text-sm font-semibold text-zinc-400 hover:text-white transition-colors"
                 >
                   Cancel
                 </button>
                 <button
                   type="submit"
                   disabled={isBulkGenerating || !bulkCount || parseInt(bulkCount, 10) < 1}
-                  className="bg-[#00b87c] hover:bg-[#00a36e] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-6 py-3 rounded-xl text-sm flex items-center gap-2 shadow-[0_4px_14px_rgba(0,184,124,0.3)] transition-all"
+                  className="bg-[#00b87c] hover:bg-[#00a36e] disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold px-6 py-2.5 rounded-xl text-sm flex items-center gap-2 shadow-[0_4px_14px_rgba(0,184,124,0.3)] transition-all"
                 >
                   {isBulkGenerating ? (
-                    <>Generating {bulkCount} Tickets...</>
+                    <>
+                      <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                      <span>Generating {bulkCount} Tickets...</span>
+                    </>
                   ) : (
                     <>⚡ Generate {bulkCount} Tickets Now</>
                   )}
@@ -1007,7 +1122,9 @@ const AdminTicketEditor = ({ activeTab, data, setData, token }) => {
       {/* A4 Multi-Ticket Print & Multi-Page PDF Modal */}
       {showA4Modal && (
         <A4PrintModal 
-          orders={filteredData} 
+          orders={data}
+          events={eventList}
+          initialEventId={eventFilter !== 'all' ? eventFilter : ''}
           onClose={() => setShowA4Modal(false)} 
         />
       )}

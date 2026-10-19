@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { LogOut, Search, CheckCircle, XCircle, User, Calendar, QrCode, PlusCircle, Ticket as TicketIcon, Home } from 'lucide-react';
+import { LogOut, Search, CheckCircle, XCircle, User, Calendar, QrCode, PlusCircle, Ticket as TicketIcon, Home, MapPin } from 'lucide-react';
 import { toast } from 'react-hot-toast';
 import api from '../services/api';
 import { Html5Qrcode } from 'html5-qrcode';
@@ -35,7 +35,7 @@ const ScannerDashboard = () => {
     const token = localStorage.getItem('scannerToken') || localStorage.getItem('adminToken') || localStorage.getItem('userToken');
     
     if (!token) {
-      navigate('/scanner/login');
+      navigate('/login');
       return;
     }
     
@@ -48,11 +48,14 @@ const ScannerDashboard = () => {
         if (u.role === 'scanner' || u.role === 'admin') {
           setUser(u);
         } else {
-          navigate('/');
+          toast.error('Scanner or Admin access required');
+          navigate('/login');
         }
       })
       .catch(() => {
-        navigate('/scanner/login');
+        localStorage.removeItem('scannerToken');
+        localStorage.removeItem('scannerUser');
+        navigate('/login');
       });
 
     fetchEvents();
@@ -230,7 +233,9 @@ const ScannerDashboard = () => {
   const handleLogout = () => {
     localStorage.removeItem('scannerToken');
     localStorage.removeItem('scannerUser');
-    navigate('/scanner/login');
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('adminToken');
+    navigate('/login');
   };
 
   if (!user) return null;
@@ -367,26 +372,93 @@ const ScannerDashboard = () => {
                     <p className="text-zinc-300 font-medium text-sm leading-relaxed">{result.message}</p>
                     
                     {result.data && (
-                      <div className="mt-5 grid grid-cols-1 gap-3 text-sm bg-black/40 p-5 rounded-2xl border border-white/5">
-                        <div className="flex items-start gap-3">
-                          <User className="w-4 h-4 text-zinc-500 mt-0.5" />
-                          <div>
-                            <span className="block text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Purchaser</span>
-                            <span className="font-bold text-white block">{result.data.user?.name || result.data.billingInfo?.firstName || 'Unknown'}</span>
-                            <span className="block text-zinc-400 text-xs mt-0.5">{result.data.user?.email || result.data.billingInfo?.email}</span>
-                          </div>
-                        </div>
+                      <div className="mt-5 space-y-4 text-sm bg-black/40 p-5 rounded-2xl border border-white/5">
                         
-                        <div className="h-px bg-white/5 my-1"></div>
-
-                        <div className="flex items-start gap-3">
-                          <Calendar className="w-4 h-4 text-zinc-500 mt-0.5" />
-                          <div>
-                            <span className="block text-zinc-500 text-xs font-bold uppercase tracking-wider mb-1">Event Details</span>
-                            <span className="font-bold text-white block">{result.data.event?.title || 'Unknown Event'}</span>
-                            <span className="block text-zinc-400 text-xs mt-0.5">{result.data.event?.dateRange}</span>
+                        {/* Event Details Section */}
+                        <div className="bg-zinc-900/80 p-4 rounded-xl border border-zinc-800">
+                          <div className="flex items-start gap-3">
+                            {result.data.event?.posterUrl ? (
+                              <img 
+                                src={result.data.event.posterUrl} 
+                                alt="Event Poster" 
+                                className="w-14 h-16 object-cover rounded-lg border border-zinc-700 shrink-0" 
+                              />
+                            ) : (
+                              <div className="w-12 h-12 bg-zinc-800 rounded-lg flex items-center justify-center shrink-0 text-zinc-500">
+                                <TicketIcon className="w-6 h-6 text-[#00b87c]" />
+                              </div>
+                            )}
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center gap-2 mb-1 flex-wrap">
+                                {result.data.event?.eventCode && (
+                                  <span className="bg-f1-red text-white text-[10px] font-bold px-2 py-0.5 rounded tracking-wider uppercase">
+                                    {result.data.event.eventCode}
+                                  </span>
+                                )}
+                                <span className="text-zinc-400 text-xs font-semibold uppercase tracking-wider">
+                                  {result.data.event?.eventType || 'Official Event'}
+                                </span>
+                              </div>
+                              <h4 className="font-['Formula1'] font-bold text-white text-base leading-tight truncate">
+                                {result.data.event?.title || 'Unknown Event'}
+                              </h4>
+                              
+                              <div className="mt-2 space-y-1 text-xs">
+                                <div className="flex items-center gap-1.5 text-zinc-300 font-medium">
+                                  <MapPin className="w-3.5 h-3.5 text-[#00b87c] shrink-0" />
+                                  <span className="truncate">{result.data.event?.location || 'Venue Not Specified'}</span>
+                                </div>
+                                <div className="flex items-center gap-1.5 text-zinc-400">
+                                  <Calendar className="w-3.5 h-3.5 text-zinc-400 shrink-0" />
+                                  <span>{result.data.event?.fullDate || result.data.event?.dateRange || 'Date TBA'}</span>
+                                  {result.data.event?.timeDetails && (
+                                    <span className="text-zinc-500">({result.data.event.timeDetails})</span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
                           </div>
                         </div>
+
+                        {/* Ticket Tier & Code */}
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
+                            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Ticket Tier</span>
+                            <span className="text-[#f3cb4d] font-bold text-sm block">
+                              {result.data.tickets?.[0]?.name || 'Standard Pass'}
+                            </span>
+                            <span className="text-zinc-400 text-[11px]">
+                              KSh {result.data.tickets?.[0]?.price || result.data.totalAmount || 0}
+                            </span>
+                          </div>
+                          <div className="bg-zinc-900/60 p-3 rounded-xl border border-zinc-800/80">
+                            <span className="text-zinc-500 text-[10px] font-bold uppercase tracking-wider block mb-0.5">Ticket Code</span>
+                            <span className="text-white font-mono font-bold text-sm block">
+                              {result.data.ticketCode || 'N/A'}
+                            </span>
+                            <span className="text-emerald-400 text-[11px] font-semibold flex items-center gap-1">
+                              ● Valid Order
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Purchaser Information */}
+                        <div className="flex items-start gap-3 pt-2 border-t border-white/5">
+                          <User className="w-4 h-4 text-zinc-500 mt-0.5 shrink-0" />
+                          <div className="min-w-0">
+                            <span className="block text-zinc-500 text-xs font-bold uppercase tracking-wider mb-0.5">Purchaser</span>
+                            <span className="font-bold text-white block truncate">
+                              {result.data.billingInfo?.firstName 
+                                ? `${result.data.billingInfo.firstName} ${result.data.billingInfo.lastName || ''}` 
+                                : (result.data.user?.name || 'Customer')}
+                            </span>
+                            <span className="block text-zinc-400 text-xs truncate">
+                              {result.data.billingInfo?.email || result.data.user?.email || 'No email'} 
+                              {result.data.billingInfo?.phone && ` • ${result.data.billingInfo.phone}`}
+                            </span>
+                          </div>
+                        </div>
+
                       </div>
                     )}
                   </div>

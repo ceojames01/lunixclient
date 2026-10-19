@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Search, Bell, Menu } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 
-const Topbar = ({ onTabChange, onLogout, adminUser, onMenuClick }) => {
+const Topbar = ({ onTabChange, onLogout, adminUser, onMenuClick, isSidebarOpen }) => {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -10,16 +10,18 @@ const Topbar = ({ onTabChange, onLogout, adminUser, onMenuClick }) => {
   const name = adminUser?.name || "Michael Jackson";
   const email = adminUser?.email || "admin@lunix.com";
   return (
-    <header className="relative h-20 bg-[#1e293b] border-b border-zinc-800/50 flex items-center justify-between px-4 lg:px-8 sticky top-0 z-40">
+    <header className={`fixed top-0 right-0 ${isSidebarOpen ? 'lg:left-64 left-0' : 'left-0'} h-20 bg-[#1e293b]/95 backdrop-blur-md border-b border-zinc-800 shadow-md flex items-center justify-between px-4 lg:px-8 z-40 transition-all duration-300`}>
       {isProfileOpen && (
-        <div className="absolute inset-0 bg-black/40 backdrop-blur-sm z-40 pointer-events-none"></div>
+        <div className="fixed inset-0 bg-black/40 backdrop-blur-sm z-40 pointer-events-none"></div>
       )}
       <div className="relative z-10 flex items-center gap-3">
         <button 
           onClick={onMenuClick}
-          className="lg:hidden p-2 -ml-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-lg transition-colors"
+          className="p-2.5 -ml-2 text-zinc-300 hover:text-white hover:bg-white/10 rounded-xl transition-all cursor-pointer flex items-center justify-center border border-transparent hover:border-zinc-700"
+          title={isSidebarOpen ? "Collapse sidebar" : "Expand sidebar"}
+          aria-label="Toggle navigation menu"
         >
-          <Menu size={24} />
+          <Menu size={22} className="transition-transform active:scale-90" />
         </button>
         <h2 className="text-lg md:text-xl font-bold text-white tracking-wide uppercase hidden sm:block">Lunix Admin</h2>
       </div>

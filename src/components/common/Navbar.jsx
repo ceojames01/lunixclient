@@ -48,13 +48,18 @@ const Navbar = () => {
         setUser(e.detail.user);
       }
     };
+    const handleVenueBannerUpdate = () => {
+      fetchEvent();
+    };
     window.addEventListener('user-updated', handleUserUpdate);
+    window.addEventListener('venue-banner-updated', handleVenueBannerUpdate);
 
     return () => { 
       active = false; 
       window.removeEventListener('user-updated', handleUserUpdate);
+      window.removeEventListener('venue-banner-updated', handleVenueBannerUpdate);
     };
-  }, []);
+  }, [location.pathname]);
   const utilityLinks = [
     { name: 'Tickets', path: '/tickets', external: true },
     { name: 'Editors Pick', path: '#' },
@@ -123,6 +128,8 @@ const Navbar = () => {
               onClick={() => {
                 localStorage.removeItem('userToken');
                 localStorage.removeItem('adminToken');
+                localStorage.removeItem('scannerToken');
+                localStorage.removeItem('scannerUser');
                 window.location.href = '/login';
               }}
             >
@@ -266,20 +273,31 @@ const Navbar = () => {
         <div className="bg-black text-white border-b border-zinc-800">
         <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
           <div className="flex flex-col justify-center">
-            <span className="font-['Formula1'] text-zinc-400 font-semibold text-[10px] md:text-xs tracking-wider uppercase">
-              {nextEvent?.eventCode || 'E 1'} | {nextEvent?.dateRange || '15 July'}
-            </span>
-            <Link to="/schedule" className="font-['Formula1'] flex items-center gap-1 font-bold text-sm md:text-base hover:text-zinc-300 transition-colors mt-0.5">
-              <span>{nextEvent?.location || 'KUTUS'}</span>
-              <ChevronRight size={16} className="stroke-[3]" />
+            <Link 
+              to="/schedule" 
+              className="group flex flex-col justify-center hover:opacity-90 transition-opacity"
+              title="View Schedule"
+            >
+              <span className="font-['Formula1'] text-zinc-400 group-hover:text-zinc-300 font-semibold text-[10px] md:text-xs tracking-wider uppercase transition-colors">
+                {nextEvent?.eventCode || 'E 1'} | {nextEvent?.dateRange || '15 July'}
+              </span>
+              <div className="font-['Formula1'] flex items-center gap-1 font-bold text-sm md:text-base text-white group-hover:text-[#00b87c] transition-colors mt-0.5">
+                <span>{nextEvent?.location || 'KUTUS'}</span>
+                <ChevronRight size={16} className="stroke-[3] group-hover:translate-x-0.5 transition-transform" />
+              </div>
             </Link>
           </div>
 
           <Link
-            to={nextEvent?.ticketLink && nextEvent.ticketLink !== '#' ? nextEvent.ticketLink : "/schedule"}
+            to={
+              nextEvent?.ticketLink && nextEvent.ticketLink !== '#' 
+                ? nextEvent.ticketLink 
+                : (nextEvent?._id ? `/tickets/${nextEvent._id}/book` : "/schedule")
+            }
             target={nextEvent?.ticketLink && nextEvent.ticketLink !== '#' ? '_blank' : undefined}
             rel={nextEvent?.ticketLink && nextEvent.ticketLink !== '#' ? 'noopener noreferrer' : undefined}
             className="flex items-center justify-center bg-[#B3BFFF] text-black w-10 h-8 rounded hover:bg-indigo-300 transition-colors duration-200"
+            title="View Event / Book Tickets"
           >
             <ExternalLink size={18} className="stroke-[2.5]" />
           </Link>

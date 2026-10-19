@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
-import { Search, Trash2, Shield, User as UserIcon, Edit, Calendar, MapPin, X, TrendingUp, Eye, Copy, MessageCircle, Ticket } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Search, Trash2, Shield, User as UserIcon, Edit, Calendar, MapPin, X, TrendingUp, Eye, Copy, MessageCircle, Ticket, Star, Layers } from 'lucide-react';
 import api from '../services/api';
 import AdminLayout from '../components/admin/AdminLayout';
 import AdminHeroEditor from '../components/admin/AdminHeroEditor';
@@ -16,9 +17,8 @@ import { compressImageIfNeeded } from '../utils/imageCompressor';
 import { toast } from 'react-hot-toast';
 
 const Admin = () => {
+  const navigate = useNavigate();
   const [token, setToken] = useState(localStorage.getItem('adminToken'));
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
   const [activeTab, setActiveTab] = useState('event');
 
   const [data, setData] = useState({ event: [], hero: [], partners: [], leaders: [], editorials: [], schedule: [], config: {}, users: [], tickets: [], leaderboard: [] });
@@ -31,17 +31,25 @@ const Admin = () => {
   const [isWhatsAppModalOpen, setIsWhatsAppModalOpen] = useState(false);
 
   useEffect(() => {
-    if (token && token !== 'virtual_preview_token') {
-      fetchData();
-      if (!adminUser) fetchAdminUser();
+    if (!token || token === 'undefined') {
+      navigate('/login');
+      return;
     }
+    fetchData();
+    if (!adminUser) fetchAdminUser();
   }, [token, activeTab]);
 
   const fetchAdminUser = async () => {
     try {
       const res = await api.get('/auth/me', { headers: { Authorization: `Bearer ${token}` } });
+      if (res.data?.user?.role !== 'admin') {
+        toast.error('Admin access required');
+        handleLogout();
+        return;
+      }
       setAdminUser(res.data.user);
     } catch (e) {
+      if (e.response?.status === 401) handleLogout();
       console.error('Fetch admin user error:', e);
     }
   };
@@ -83,20 +91,13 @@ const Admin = () => {
     }
   };
 
-  const handleLogin = async (e) => {
-    e.preventDefault();
-    try {
-      const res = await api.post('/auth/login', { email, password });
-      localStorage.setItem('adminToken', res.data.token);
-      setToken(res.data.token);
-    } catch (error) {
-      toast.error(error.response?.data?.message || 'Login failed. Please check your credentials.', { style: { background: '#333', color: '#fff' } });
-    }
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('adminToken');
+    localStorage.removeItem('userToken');
+    localStorage.removeItem('scannerToken');
+    localStorage.removeItem('scannerUser');
     setToken(null);
+    navigate('/login');
   };
 
   const handleToggleRole = async (user) => {
@@ -135,6 +136,26 @@ const Admin = () => {
       fetchData();
     } catch (error) {
       toast.error('Delete failed', { style: { background: '#333', color: '#fff' } });
+    }
+  };
+
+  const handleSetVenueBanner = async (eventId) => {
+    try {
+      await api.put(`/admin/event/${eventId}/set-banner`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      setData(prev => ({
+        ...prev,
+        event: (prev.event || []).map(ev => ({
+          ...ev,
+          isVenueBanner: ev._id === eventId
+        }))
+      }));
+      window.dispatchEvent(new CustomEvent('venue-banner-updated'));
+      toast.success('⭐ Navbar Venue Banner updated successfully!', { style: { background: '#333', color: '#fff' } });
+    } catch (err) {
+      console.error('Failed to set venue banner:', err);
+      toast.error('Failed to update venue banner');
     }
   };
 
@@ -243,18 +264,7 @@ const Admin = () => {
   };
 
   if (!token) {
-    return (
-      <div className="min-h-screen bg-[#0f172a] flex items-center justify-center text-white font-sans">
-        <form onSubmit={handleLogin} className="bg-[#1e293b] p-8 rounded-2xl border border-zinc-800 shadow-2xl w-96">
-          <div className="flex justify-center mb-6">
-            <h2 className="text-2xl font-bold tracking-wide text-white">Seekon <span className="text-[#00b87c]">Admin</span></h2>
-          </div>
-          <input type="email" placeholder="Email Address" value={email} onChange={e => setEmail(e.target.value)} className="w-full mb-4 p-3.5 bg-[#0f172a] rounded-xl border border-zinc-700 focus:outline-none focus:border-[#00b87c] transition-colors" required />
-          <input type="password" placeholder="Password" value={password} onChange={e => setPassword(e.target.value)} className="w-full mb-6 p-3.5 bg-[#0f172a] rounded-xl border border-zinc-700 focus:outline-none focus:border-[#00b87c] transition-colors" required />
-          <button type="submit" className="w-full bg-[#00b87c] text-white font-bold p-3.5 rounded-xl hover:bg-[#00a36d] transition-colors shadow-lg shadow-[#00b87c]/20">Sign In to Dashboard</button>
-        </form>
-      </div>
-    );
+    return null;
   }
 
   const renderForm = () => (
@@ -594,45 +604,85 @@ const Admin = () => {
               isUploading={isUploading} 
               handleImageUpload={handleImageUpload}
               onCancel={() => setEditingItem(null)}
+              token={token}
+              eventsCount={(data.event || []).length}
+              onVenueBannerChange={(eventId, isBanner) => {
+                setData(prev => ({
+                  ...prev,
+                  event: (prev.event || []).map(ev => ({
+                    ...ev,
+                    isVenueBanner: isBanner ? ev._id === eventId : (ev._id === eventId ? false : ev.isVenueBanner)
+                  }))
+                }));
+                window.dispatchEvent(new CustomEvent('venue-banner-updated'));
+              }}
             />
           ) : activeTab === 'event' && !editingItem ? (
             <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {(data.event || []).map(event => (
-                <div key={event._id} className={`w-full aspect-[4/5] bg-zinc-900 border ${event.isActive !== false ? 'border-zinc-800 hover:border-[#00b87c]' : 'border-red-900/50 hover:border-red-500'} rounded-2xl overflow-hidden relative shadow-lg group ${event.isActive === false ? 'opacity-60 grayscale' : ''}`}>
-                  {event.posterUrl ? (
-                    <img src={event.posterUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-80 filter hover:brightness-110 transition-all duration-500" />
-                  ) : (
-                    <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900">
-                      <span className="text-xs font-bold tracking-widest uppercase">No Poster</span>
-                    </div>
-                  )}
-                  <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
-                  
-                  <div className="absolute top-3 left-3 bg-f1-red text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded shadow-lg">
-                    {event.eventCode || 'Code'}
-                  </div>
-                  <div className="absolute top-3 right-3 flex items-center gap-2">
-                    <div className={`w-2.5 h-2.5 rounded-full ${event.isActive !== false ? 'bg-[#00b87c]' : 'bg-red-500'} shadow-[0_0_8px_rgba(0,0,0,0.5)]`}></div>
-                  </div>
+              {(data.event || []).map(event => {
+                const isSingleEvent = (data.event || []).length === 1;
+                const isBanner = event.isVenueBanner || isSingleEvent;
+                const hasCustomLayout = !!(event.ticketTemplateUrl || event.psdUrl);
 
-                  <div className="absolute bottom-0 left-0 p-5 w-full flex flex-col justify-end transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500">
-                    <h3 className="font-['Formula1'] text-white text-lg font-bold uppercase tracking-wider drop-shadow-md leading-tight mb-2 line-clamp-2">
-                      {event.title}
-                    </h3>
-                    <div className="flex flex-col gap-1 text-xs text-zinc-300 font-medium opacity-80 group-hover:opacity-100 transition-opacity">
-                      <div className="flex items-center gap-1.5"><Calendar size={12} className="text-[#00b87c]" /> {event.dateRange}</div>
-                      <div className="flex items-center gap-1.5"><MapPin size={12} className="text-[#00b87c]" /> <span className="truncate">{event.location}</span></div>
+                return (
+                  <div key={event._id} className={`w-full aspect-[4/5] bg-zinc-900 border ${event.isActive !== false ? 'border-zinc-800 hover:border-[#00b87c]' : 'border-red-900/50 hover:border-red-500'} rounded-2xl overflow-hidden relative shadow-lg group ${event.isActive === false ? 'opacity-60 grayscale' : ''}`}>
+                    {event.posterUrl ? (
+                      <img src={event.posterUrl} alt={event.title} className="absolute inset-0 w-full h-full object-cover opacity-80 filter hover:brightness-110 transition-all duration-500" />
+                    ) : (
+                      <div className="absolute inset-0 w-full h-full flex flex-col items-center justify-center text-zinc-600 bg-zinc-900">
+                        <span className="text-xs font-bold tracking-widest uppercase">No Poster</span>
+                      </div>
+                    )}
+                    <div className="absolute inset-0 bg-gradient-to-t from-black via-black/40 to-transparent"></div>
+                    
+                    <div className="absolute top-3 left-3 flex flex-col gap-1.5 z-10">
+                      <div className="bg-f1-red text-white text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded shadow-lg self-start">
+                        {event.eventCode || 'Code'}
+                      </div>
+                      {isBanner && (
+                        <div className="bg-amber-500 text-black text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded shadow-lg flex items-center gap-1 self-start">
+                          <Star size={10} className="fill-black" /> Venue Banner
+                        </div>
+                      )}
+                      {hasCustomLayout && (
+                        <div className="bg-indigo-600 text-white text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shadow-lg flex items-center gap-1 self-start">
+                          <Layers size={10} /> PSD Layout
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="absolute top-3 right-3 flex items-center gap-2 z-10">
+                      <div className={`w-2.5 h-2.5 rounded-full ${event.isActive !== false ? 'bg-[#00b87c]' : 'bg-red-500'} shadow-[0_0_8px_rgba(0,0,0,0.5)]`}></div>
+                    </div>
+
+                    <div className="absolute bottom-0 left-0 p-5 w-full flex flex-col justify-end transform translate-y-2 group-hover:translate-y-0 transition-transform duration-500 z-10">
+                      <h3 className="font-['Formula1'] text-white text-lg font-bold uppercase tracking-wider drop-shadow-md leading-tight mb-2 line-clamp-2">
+                        {event.title}
+                      </h3>
+                      <div className="flex flex-col gap-1 text-xs text-zinc-300 font-medium opacity-80 group-hover:opacity-100 transition-opacity">
+                        <div className="flex items-center gap-1.5"><Calendar size={12} className="text-[#00b87c]" /> {event.dateRange}</div>
+                        <div className="flex items-center gap-1.5"><MapPin size={12} className="text-[#00b87c]" /> <span className="truncate">{event.location}</span></div>
+                      </div>
+                    </div>
+                    
+                    <div className="absolute inset-0 bg-black/40 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-3 z-20 p-4">
+                      {(!isBanner && (data.event || []).length > 1) && (
+                        <button 
+                          onClick={(e) => { e.stopPropagation(); handleSetVenueBanner(event._id); }} 
+                          className="bg-amber-500 hover:bg-amber-400 text-black px-3.5 py-1.5 rounded-full text-xs font-bold transition-all shadow-lg flex items-center gap-1.5 transform hover:scale-105"
+                          title="Show this event's venue in the navbar banner"
+                        >
+                          <Star size={13} className="fill-black" /> Set as Venue Banner
+                        </button>
+                      )}
+                      <div className="flex gap-3">
+                        <button onClick={() => openForm(event)} className="bg-[#3b82f6] text-white p-3 rounded-full hover:bg-blue-500 transition-colors shadow-lg" title="Edit Event"><Edit size={20} /></button>
+                        <button onClick={() => handleDelete(event._id)} className="bg-red-500 text-white p-3 rounded-full hover:bg-red-500 transition-colors shadow-lg" title="Delete Event"><Trash2 size={20} /></button>
+                      </div>
                     </div>
                   </div>
-                  
-                  <div className="absolute inset-0 bg-black/20 backdrop-blur-md opacity-0 group-hover:opacity-100 transition-opacity duration-300 flex flex-col items-center justify-center gap-4">
-                    <div className="flex gap-3">
-                      <button onClick={() => openForm(event)} className="bg-[#3b82f6] text-white p-3 rounded-full hover:bg-blue-500 transition-colors shadow-lg"><Edit size={20} /></button>
-                      <button onClick={() => handleDelete(event._id)} className="bg-red-500 text-white p-3 rounded-full hover:bg-red-500 transition-colors shadow-lg"><Trash2 size={20} /></button>
-                    </div>
-                  </div>
-                </div>
-              ))}
+                );
+              })}
               {(!data.event || data.event.length === 0) && (
                 <div className="col-span-full py-20 text-center text-zinc-500">No events found. Click "Add New" to create one.</div>
               )}
@@ -645,6 +695,7 @@ const Admin = () => {
               data={data[activeTab] || []} 
               setData={(newData) => setData(prev => ({ ...prev, [activeTab]: newData }))} 
               token={token} 
+              events={data.event || []}
             />
           ) : activeTab === 'whatsapp' ? (
             <WhatsAppAuthModal token={token} onBack={() => setActiveTab('dashboard')} />

@@ -17,12 +17,15 @@ const TicketPass = ({ order, ticketIndex = 0, id, className = '' }) => {
   const passType = rawTier.includes('PASS') || rawTier.includes('TICKET') ? rawTier : `${rawTier} PASS`;
   const price = ticketItem.price || order.totalAmount || 400;
 
+  // Use event's custom PSD ticket layout if available, otherwise fallback to default clean template
+  const templateBg = event.ticketTemplateUrl || event.psdUrl || '/images/ticket-psd-template-clean.png';
+
   return (
     <div 
       id={id}
       className={`relative w-full max-w-[950px] aspect-[1650/600] select-none overflow-hidden rounded-xl shadow-2xl border border-zinc-800 bg-black text-white font-['Titillium_Web'] ${className}`}
       style={{
-        backgroundImage: "url('/images/ticket-psd-template-clean.png')",
+        backgroundImage: `url("${templateBg}")`,
         backgroundSize: '100% 100%',
         backgroundRepeat: 'no-repeat'
       }}

@@ -16,7 +16,9 @@ import {
   CreditCard,
   Award,
   MessageSquare,
-  Sparkles
+  Sparkles,
+  ChevronLeft,
+  X
 } from 'lucide-react';
 
 const navItems = [
@@ -54,24 +56,36 @@ const Sidebar = ({ activeTab, onTabChange, onLogout, adminUser, isOpen, setIsOpe
         />
       )}
       
-      <aside className={`w-64 bg-[#1e293b] text-zinc-300 flex flex-col h-screen fixed left-0 top-0 border-r border-zinc-700 shadow-xl z-50 transition-transform duration-300 ${
-        isOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
+      <aside className={`w-64 bg-[#1e293b] text-zinc-300 flex flex-col h-screen fixed left-0 top-0 border-r border-zinc-700 shadow-xl z-50 transition-transform duration-300 ease-in-out ${
+        isOpen ? 'translate-x-0' : '-translate-x-full'
       }`}>
         {/* Brand */}
-        <div className="h-16 flex items-center px-6 border-b border-zinc-700 shrink-0">
-        <div className="flex items-center gap-3 text-white">
-          <div className="w-8 h-8 bg-[#00b87c] rounded-md flex items-center justify-center">
-            <TrendingUp size={20} className="text-white" />
+        <div className="h-16 flex items-center justify-between px-5 border-b border-zinc-700 shrink-0">
+          <div className="flex items-center gap-3 text-white">
+            <div className="w-8 h-8 bg-[#00b87c] rounded-md flex items-center justify-center shrink-0">
+              <TrendingUp size={20} className="text-white" />
+            </div>
+            <div>
+              <h1 className="font-bold text-lg leading-tight tracking-wide">LUNIX</h1>
+              <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-widest">Admin Panel</p>
+            </div>
           </div>
-          <div>
-            <h1 className="font-bold text-lg leading-tight tracking-wide">LUNIX</h1>
-            <p className="text-[10px] text-zinc-400 font-medium uppercase tracking-widest">Admin Panel</p>
-          </div>
+          <button
+            onClick={() => {
+              setIsOpen(false);
+              localStorage.setItem('admin_sidebar_open', 'false');
+            }}
+            className="p-1.5 text-zinc-400 hover:text-white hover:bg-zinc-800 rounded-lg transition-colors cursor-pointer"
+            title="Close sidebar"
+            aria-label="Close sidebar"
+          >
+            <ChevronLeft size={20} className="hidden lg:block" />
+            <X size={20} className="lg:hidden" />
+          </button>
         </div>
-      </div>
 
-      {/* Navigation */}
-      <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1">
+        {/* Navigation */}
+        <div className="flex-1 overflow-y-auto py-6 px-4 space-y-1 [scrollbar-width:thin] [scrollbar-color:#334155_transparent]">
         {navItems.map((item) => {
           const Icon = item.icon;
           const isActive = activeTab === item.id;
